@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Where in the World? — The Global Culture and Connection Challenge</title>
+  <meta name="description" content="A team game show about where traditions, foods, inventions, sounds and wonders come from.">
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <!-- ============ SVG ICON SPRITE (original artwork) ============ -->
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 12h19M12 2.5c3 3 4.2 6.2 4.2 9.5S15 18.5 12 21.5M12 2.5C9 5.5 7.8 8.7 7.8 12S9 18.5 12 21.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 12 6.4a2.6 2.6 0 0 1 0 5.2z" fill="currentColor"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-board" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="10" r="1.8" fill="currentColor"/><circle cx="12" cy="10" r="1.8" fill="currentColor"/><circle cx="16" cy="10" r="1.8" fill="currentColor"/><circle cx="8" cy="15" r="1.8" fill="currentColor"/><circle cx="12" cy="15" r="1.8" fill="currentColor"/><circle cx="16" cy="15" r="1.8" fill="currentColor"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 10.5v6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="7.3" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 21H20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.2 1.3-6.6-4.9-4.6 6.6-.8z" fill="currentColor"/></symbol>
+    <!-- Category emblems -->
+    <symbol id="c-food" viewBox="0 0 64 64"><circle cx="32" cy="34" r="20" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="32" cy="34" r="11" fill="none" stroke="currentColor" stroke-width="3"/><path d="M8 10v14a4 4 0 0 0 4 4v26M12 10v12M16 10v14a4 4 0 0 1-4 4M54 10c-5 4-6 10-6 18h6v26" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="c-trad" viewBox="0 0 64 64"><path d="M32 6v8M20 14l12 0 12 0-4 34H24z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M24 26h16M23 36h18" stroke="currentColor" stroke-width="3"/><path d="M28 48l-2 10M36 48l2 10M10 20l4 3M54 20l-4 3M8 34h5M56 34h-5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="c-obj" viewBox="0 0 64 64"><ellipse cx="32" cy="42" rx="26" ry="8" fill="none" stroke="currentColor" stroke-width="4"/><path d="M18 40c0-14 6-24 14-24s14 10 14 24" fill="none" stroke="currentColor" stroke-width="4"/><path d="M19 33h26" stroke="currentColor" stroke-width="3" stroke-dasharray="4 3"/></symbol>
+    <symbol id="c-mus" viewBox="0 0 64 64"><path d="M24 48V14l28-6v34" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><ellipse cx="17" cy="48" rx="8" ry="6" fill="currentColor"/><ellipse cx="45" cy="42" rx="8" ry="6" fill="currentColor"/><path d="M24 22l28-6" stroke="currentColor" stroke-width="4"/></symbol>
+    <symbol id="c-inv" viewBox="0 0 64 64"><path d="M22 40c-5-4-8-9-8-15a18 18 0 0 1 36 0c0 6-3 11-8 15v6H22z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M24 52h16M27 58h10M32 46V30l-5-5M32 30l5-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="c-ani" viewBox="0 0 64 64"><ellipse cx="32" cy="44" rx="12" ry="10" fill="currentColor"/><ellipse cx="14" cy="30" rx="6" ry="8" fill="currentColor"/><ellipse cx="50" cy="30" rx="6" ry="8" fill="currentColor"/><ellipse cx="24" cy="16" rx="6" ry="8" fill="currentColor"/><ellipse cx="40" cy="16" rx="6" ry="8" fill="currentColor"/></symbol>
+    <symbol id="c-spo" viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="4"/><path d="M12 22c10 6 30 6 40 0M12 42c10-6 30-6 40 0M32 8v48" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
+    <symbol id="c-land" viewBox="0 0 64 64"><path d="M6 56h52M10 56V30l10-8 10 8v26M34 56V18l12-10 12 10v38" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M16 40h8M16 48h8M40 26h12M40 36h12M40 46h12" stroke="currentColor" stroke-width="3"/></symbol>
+    <symbol id="c-art" viewBox="0 0 64 64"><path d="M32 6C17 6 6 17 6 30c0 12 9 18 16 16 5-1 6 4 4 8-2 5 2 8 8 8 14 0 24-14 24-30C58 17 47 6 32 6z" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="20" cy="26" r="4" fill="currentColor"/><circle cx="32" cy="18" r="4" fill="currentColor"/><circle cx="44" cy="26" r="4" fill="currentColor"/><circle cx="44" cy="40" r="4" fill="currentColor"/></symbol>
+    <symbol id="c-nat" viewBox="0 0 64 64"><path d="M4 54l18-30 10 16 8-12 20 26z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M18 31l4-7 4 7" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="48" cy="14" r="6" fill="currentColor"/></symbol>
+    <symbol id="c-mystery" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="4"/><path d="M24 24a8 8 0 1 1 12 7c-3 2-4 3-4 7" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="46" r="3" fill="currentColor"/></symbol>
+  </svg>
+
+  <!-- ============ TOP BAR (visible on every screen) ============ -->
+  <header class="topbar" role="banner">
+    <div class="brand" aria-hidden="true">
+      <svg class="brand-icon"><use href="#i-globe"/></svg>
+      <span class="brand-text">Where in the World?</span>
+    </div>
+    <nav class="topbar-actions" aria-label="Game utilities">
+      <button type="button" class="icon-btn" id="btn-top-info" aria-label="About, map notes and how to play"><svg><use href="#i-info"/></svg><span class="btn-label">About</span></button>
+      <button type="button" class="icon-btn" id="btn-top-credits" aria-label="Credits and sources"><svg><use href="#i-book"/></svg><span class="btn-label">Credits</span></button>
+      <button type="button" class="icon-btn" id="btn-top-soundboard" aria-label="Open facilitator soundboard" aria-expanded="false" aria-controls="soundboard"><svg><use href="#i-board"/></svg><span class="btn-label">Soundboard</span></button>
+      <button type="button" class="icon-btn" id="btn-top-audio" aria-label="Sound and display settings"><svg><use href="#i-sliders"/></svg><span class="btn-label">Settings</span></button>
+      <button type="button" class="icon-btn mute-btn" id="btn-top-mute" aria-pressed="false"><svg><use href="#i-sound"/></svg><span class="btn-label">Mute</span></button>
+    </nav>
+  </header>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== SCREEN 1: INTRO ===================== -->
+    <section class="screen screen-intro" id="screen-intro" aria-labelledby="intro-title">
+      <div class="intro-card">
+        <div class="stamp stamp-a" aria-hidden="true"><span>CULTURE</span><span class="stamp-mid">✦ CHECKPOINT ✦</span><span>CURIOSITY</span></div>
+        <div class="stamp stamp-b" aria-hidden="true"><span>ARRIVALS</span><span class="stamp-mid">ALL 7 CONTINENTS</span><span>VISA-FREE</span></div>
+        <p class="eyebrow">A team game show for curious minds</p>
+        <h1 id="intro-title" class="mega-title">Where in the <span class="title-world">World?</span></h1>
+        <p class="subtitle">The Global Culture and Connection Challenge</p>
+        <p class="lede">Inspect the clue, share what you know and plant your team’s pin on the map. You may recognise it from home, travel, family, food, music or pure brilliant deduction.</p>
+        <div class="intro-actions">
+          <button type="button" class="btn btn-hero" id="btn-play"><svg><use href="#i-pin"/></svg>Play</button>
+        </div>
+        <div class="intro-sound">
+          <label for="intro-sound-mode">Sound mode</label>
+          <select id="intro-sound-mode">
+            <option value="professional">Professional — minimal, polished</option>
+            <option value="fun" selected>Fun — game-show reactions</option>
+            <option value="chaotic">Chaotic — maximum (workplace-safe) energy</option>
+            <option value="custom">Custom — choose sound categories</option>
+          </select>
+          <button type="button" class="btn btn-ghost btn-small" id="btn-intro-mute" aria-pressed="false">Mute sound</button>
+        </div>
+        <p class="fineprint">Sound starts only after you press a button. The game is fully playable with sound off.</p>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN 2: SETUP ===================== -->
+    <section class="screen" id="screen-setup" aria-labelledby="setup-title" hidden>
+      <div class="panel panel-wide">
+        <h2 id="setup-title" class="screen-title">Game Setup</h2>
+        <form id="setup-form" novalidate>
+          <fieldset class="field-group">
+            <legend>How long is your session?</legend>
+            <div class="choice-grid" id="duration-choices">
+              <label class="choice"><input type="radio" name="duration" value="5"><span><strong>5 min</strong><em>Quick Icebreaker</em></span></label>
+              <label class="choice"><input type="radio" name="duration" value="10"><span><strong>10 min</strong><em>Team Energiser</em></span></label>
+              <label class="choice"><input type="radio" name="duration" value="15"><span><strong>15 min</strong><em>Meeting Challenge</em></span></label>
+              <label class="choice"><input type="radio" name="duration" value="20"><span><strong>20 min</strong><em>Extended Challenge</em></span></label>
+              <label class="choice"><input type="radio" name="duration" value="25" checked><span><strong>25 min</strong><em>Standard Game</em></span></label>
+              <label class="choice"><input type="radio" name="duration" value="30"><span><strong>30 min</strong><em>Culture &amp; Connection</em></span></label>
+              <label class="choice"><input type="radio" name="duration" value="custom"><span><strong>Custom</strong><em>Your own length</em></span></label>
+            </div>
+            <div class="custom-duration" id="custom-duration-row" hidden>
+              <label for="custom-minutes">Custom length (whole minutes, 3–120)</label>
+              <input type="number" id="custom-minutes" min="3" max="120" step="1" inputmode="numeric" value="45" aria-describedby="custom-minutes-error">
+              <p class="field-error" id="custom-minutes-error" role="alert"></p>
+            </div>
+          </fieldset>
+
+          <fieldset class="field-group rounds-box">
+            <legend>Rounds</legend>
+            <p class="rounds-estimate" id="rounds-estimate" aria-live="polite"></p>
+            <div class="stepper">
+              <button type="button" class="btn btn-round" id="rounds-minus" aria-label="Fewer rounds">−</button>
+              <label class="visually-hidden" for="rounds-input">Number of rounds</label>
+              <input type="number" id="rounds-input" min="1" max="40" step="1" inputmode="numeric" aria-describedby="rounds-help">
+              <button type="button" class="btn btn-round" id="rounds-plus" aria-label="More rounds">+</button>
+              <button type="button" class="btn btn-ghost btn-small" id="rounds-recommended">Use recommended</button>
+            </div>
+            <p class="help" id="rounds-help"></p>
+          </fieldset>
+
+          <div class="two-col">
+            <fieldset class="field-group">
+              <legend>Difficulty</legend>
+              <label class="radio-line"><input type="radio" name="difficulty" value="mixed" checked> <span><strong>Mixed Challenge</strong> — medium, hard and expert</span></label>
+              <label class="radio-line"><input type="radio" name="difficulty" value="hard"> <span><strong>Hard</strong> — hard and expert only</span></label>
+              <label class="radio-line"><input type="radio" name="difficulty" value="expert"> <span><strong>Expert Explorer</strong> — expert first, topped up with hard</span></label>
+            </fieldset>
+            <fieldset class="field-group">
+              <legend>Sound mode</legend>
+              <label class="radio-line"><input type="radio" name="soundmode" value="professional"> <span><strong>Professional</strong> — timer, lock-ins, reveals, applause</span></label>
+              <label class="radio-line"><input type="radio" name="soundmode" value="fun" checked> <span><strong>Fun</strong> — crowd and confidence reactions</span></label>
+              <label class="radio-line"><input type="radio" name="soundmode" value="chaotic"> <span><strong>Chaotic</strong> — maximum approved game-show energy</span></label>
+              <label class="radio-line"><input type="radio" name="soundmode" value="custom"> <span><strong>Custom</strong> — choose categories (in Settings)</span></label>
+            </fieldset>
+          </div>
+
+          <fieldset class="field-group">
+            <legend>Question selection</legend>
+            <div class="choice-grid choice-grid-small" id="category-choices"></div>
+          </fieldset>
+
+          <fieldset class="field-group">
+            <legend>Options</legend>
+            <div class="toggle-grid">
+              <label class="toggle"><input type="checkbox" id="opt-images" checked><span>Show question images</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-audioclues" checked><span>Play audio clues</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-spotlights" checked><span>Cultural Spotlights</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-confidence" checked><span>Confidence ratings</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-distance" checked><span>Show approximate distances</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-tiebreaker" checked><span>Tie-breaker (Sudden Death)</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-random" checked><span>Random question order</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-norepeat" checked><span>Avoid questions played before</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-warnings" checked><span>Session time warnings</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-hints" checked><span>Allow extra hints</span></label>
+              <label class="toggle"><input type="checkbox" id="opt-alternate"><span>Alternate which team goes first</span></label>
+            </div>
+            <p class="help" id="history-help"></p>
+            <button type="button" class="btn btn-ghost btn-small" id="btn-clear-history">Forget previously played questions</button>
+          </fieldset>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" data-nav="intro">Back</button>
+            <button type="submit" class="btn btn-primary" id="btn-to-rules">Continue to Rules</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN 3: RULES ===================== -->
+    <section class="screen" id="screen-rules" aria-labelledby="rules-title" hidden>
+      <div class="panel panel-wide">
+        <h2 id="rules-title" class="screen-title">House Rules</h2>
+        <div class="two-col rules">
+          <ol class="rule-list">
+            <li>Two teams compete.</li>
+            <li>Each team gets up to <strong>60 seconds</strong> per turn.</li>
+            <li>Teams discuss the clue and choose a location on the world map.</li>
+            <li>The team’s nominated spokesperson or clicker places the official pin.</li>
+            <li>Once a guess is locked in, it cannot change unless the facilitator resets that team’s turn.</li>
+            <li>The second team never sees the first team’s pin before locking in its own guess.</li>
+            <li>After both teams guess, the answer is revealed.</li>
+            <li>The team with the highest total score wins.</li>
+            <li>A tie after the final round triggers an <strong>Expert Sudden Death</strong> question.</li>
+          </ol>
+          <div class="scoring-card">
+            <h3>Scoring</h3>
+            <ul class="score-list">
+              <li><span class="pts pts-3">3</span> Your pin is inside the correct country’s boundary.</li>
+              <li><span class="pts pts-2">2</span> Incorrect, but the closer of the two guesses.</li>
+              <li><span class="pts pts-1">1</span> Incorrect and further away.</li>
+              <li><span class="pts pts-0">0</span> No guess locked in before time ran out.</li>
+            </ul>
+            <ul class="fine-rules">
+              <li>Both teams in the correct country: both score 3.</li>
+              <li>Both incorrect at the same rounded distance: both score 2.</li>
+              <li>If one team finds the correct country, the other team’s incorrect guess scores 1.</li>
+              <li>If only one team submits, it is scored normally (a lone incorrect guess counts as the closer guess) and the other team scores 0.</li>
+              <li>If neither team submits, both score 0 and the facilitator can replay or continue.</li>
+              <li>If time runs out while a pin is placed but not locked, that pin is locked automatically.</li>
+              <li>Distances are measured to the answer marker. A pin in the sea within 50 km of the answer, or within 25 km of the correct coastline, counts as the correct country.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" data-nav="setup">Back</button>
+          <button type="button" class="btn btn-primary" id="btn-rules-continue">Continue</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN 4: TEAMS ===================== -->
+    <section class="screen" id="screen-teams" aria-labelledby="teams-title" hidden>
+      <div class="panel">
+        <h2 id="teams-title" class="screen-title">Meet the Teams</h2>
+        <form id="teams-form" novalidate>
+          <div class="team-inputs">
+            <div class="team-input team-1">
+              <span class="team-badge team-badge-1" aria-hidden="true">1</span>
+              <label for="team1-name">Team 1 name <span class="shape-note">(round pin ●)</span></label>
+              <div class="input-row">
+                <input type="text" id="team1-name" maxlength="40" autocomplete="off" aria-describedby="team1-error">
+                <button type="button" class="btn btn-ghost btn-small" id="team1-reroll" aria-label="Reroll Team 1 name">Reroll</button>
+              </div>
+              <p class="field-error" id="team1-error" role="alert"></p>
+            </div>
+            <div class="team-input team-2">
+              <span class="team-badge team-badge-2" aria-hidden="true">2</span>
+              <label for="team2-name">Team 2 name <span class="shape-note">(diamond pin ◆)</span></label>
+              <div class="input-row">
+                <input type="text" id="team2-name" maxlength="40" autocomplete="off" aria-describedby="team2-error">
+                <button type="button" class="btn btn-ghost btn-small" id="team2-reroll" aria-label="Reroll Team 2 name">Reroll</button>
+              </div>
+              <p class="field-error" id="team2-error" role="alert"></p>
+            </div>
+          </div>
+          <div class="center-actions">
+            <button type="button" class="btn btn-secondary" id="btn-choose-names">Choose Names for Us</button>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" data-nav="rules">Back</button>
+            <button type="submit" class="btn btn-primary">Start Game</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN 5: STARTING PAGE ===================== -->
+    <section class="screen" id="screen-start" aria-labelledby="start-title" hidden>
+      <div class="panel">
+        <p class="eyebrow">Boarding now</p>
+        <h2 id="start-title" class="screen-title">Ready for Departure</h2>
+        <div class="versus" id="start-versus"></div>
+        <dl class="summary-list" id="start-summary"></dl>
+        <p class="reminder"><svg aria-hidden="true"><use href="#i-globe"/></svg> Everyone’s experience counts. Family recipes, travels, music, languages and lived culture are all superpowers here — ask around your team before you pin!</p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" data-nav="teams">Back</button>
+          <button type="button" class="btn btn-primary btn-big" id="btn-begin">Begin Round 1</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN 6/7: GAME + REVEAL ===================== -->
+    <section class="screen screen-game" id="screen-game" aria-labelledby="game-heading" hidden>
+      <h2 id="game-heading" class="visually-hidden">Main game</h2>
+      <div class="scorebar" id="scorebar">
+        <div class="sb-round">
+          <span class="sb-label">Round</span>
+          <span class="sb-value" id="sb-round">1 / 9</span>
+          <div class="mini-progress" aria-hidden="true"><span id="sb-round-progress"></span></div>
+        </div>
+        <div class="sb-team sb-team-1" id="sb-team-1">
+          <span class="team-badge team-badge-1" aria-hidden="true">1</span>
+          <span class="sb-name" id="sb-name-1"></span>
+          <span class="sb-score" id="sb-score-1" aria-live="polite">0</span>
+        </div>
+        <div class="sb-timer" id="sb-timer">
+          <div class="timer-ring" id="timer-ring" role="timer" aria-label="Team turn timer">
+            <svg viewBox="0 0 44 44" aria-hidden="true"><circle class="ring-bg" cx="22" cy="22" r="19"/><circle class="ring-fg" id="ring-fg" cx="22" cy="22" r="19"/></svg>
+            <span class="timer-num" id="timer-num">60</span>
+          </div>
+          <span class="timer-state" id="timer-state">Ready</span>
+        </div>
+        <div class="sb-team sb-team-2" id="sb-team-2">
+          <span class="team-badge team-badge-2" aria-hidden="true">2</span>
+          <span class="sb-name" id="sb-name-2"></span>
+          <span class="sb-score" id="sb-score-2" aria-live="polite">0</span>
+        </div>
+        <div class="sb-session">
+          <span class="sb-label">Session left</span>
+          <span class="sb-value" id="sb-session">25:00</span>
+          <div class="mini-progress" aria-hidden="true"><span id="sb-session-progress"></span></div>
+        </div>
+      </div>
+
+      <div class="game-layout">
+        <!-- Clue / reveal panel -->
+        <aside class="clue-panel" id="clue-panel" aria-label="Clue">
+          <div id="clue-view">
+            <div class="chip-row">
+              <span class="chip chip-cat" id="clue-category"></span>
+              <span class="chip chip-diff" id="clue-difficulty"></span>
+              <span class="chip chip-type" id="clue-type"></span>
+            </div>
+            <div class="turn-banner" id="turn-banner" aria-live="polite"></div>
+            <h3 class="clue-title" id="clue-title"></h3>
+            <div class="clue-media" id="clue-media"></div>
+            <p class="clue-text" id="clue-text"></p>
+            <div class="hints" id="hints-box">
+              <ol class="hint-list" id="hint-list"></ol>
+              <button type="button" class="btn btn-ghost btn-small" id="btn-hint">Reveal a hint</button>
+              <p class="help">Hints are visible to both teams.</p>
+            </div>
+            <div class="confidence" id="confidence-box">
+              <p class="confidence-q" id="confidence-label">How confident is your team?</p>
+              <div class="confidence-options" role="radiogroup" aria-labelledby="confidence-label" id="confidence-options">
+                <button type="button" role="radio" aria-checked="false" data-conf="Very Confident">Very Confident</button>
+                <button type="button" role="radio" aria-checked="false" data-conf="Fairly Confident">Fairly Confident</button>
+                <button type="button" role="radio" aria-checked="false" data-conf="Unsure">Unsure</button>
+                <button type="button" role="radio" aria-checked="false" data-conf="Total Guess">Total Guess</button>
+              </div>
+            </div>
+            <div class="country-picker" id="country-picker">
+              <label for="country-search">Keyboard / list alternative: choose a country</label>
+              <div class="input-row">
+                <input type="text" id="country-search" list="country-list" autocomplete="off" placeholder="Start typing a country…">
+                <button type="button" class="btn btn-ghost btn-small" id="btn-place-country">Place pin</button>
+              </div>
+              <datalist id="country-list"></datalist>
+              <p class="field-error" id="country-error" role="alert"></p>
+            </div>
+            <div class="pin-status" id="pin-status" aria-live="polite"></div>
+            <button type="button" class="btn btn-primary btn-lock" id="btn-lock">Lock In Guess</button>
+          </div>
+
+          <!-- Answer reveal (Screen 7) -->
+          <div id="reveal-view" hidden>
+            <p class="eyebrow" id="reveal-eyebrow">Answer reveal</p>
+            <h3 class="reveal-answer" id="reveal-answer" tabindex="-1"></h3>
+            <p class="reveal-country" id="reveal-country"></p>
+            <div class="result-cards" id="result-cards"></div>
+            <div class="spotlight" id="spotlight"></div>
+            <div class="reveal-actions">
+              <button type="button" class="btn btn-primary btn-big" id="btn-next">Next Round</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Map -->
+        <div class="map-area">
+          <div class="map-wrap">
+            <div id="map" class="map" tabindex="0" role="application" aria-label="World map. Click or tap to place your team’s pin. With the keyboard, use arrow keys to pan, plus and minus to zoom, then use Drop pin at map centre."></div>
+            <div class="crosshair" aria-hidden="true"></div>
+            <div class="map-overlay" id="map-overlay" hidden>
+              <div class="handover-card" id="handover-card" role="dialog" aria-modal="false" aria-labelledby="handover-title">
+                <span class="team-badge" id="handover-badge" aria-hidden="true">1</span>
+                <h3 id="handover-title"></h3>
+                <p id="handover-text"></p>
+                <button type="button" class="btn btn-primary btn-big" id="btn-start-turn">Start</button>
+              </div>
+            </div>
+            <div class="map-error" id="map-error" hidden></div>
+          </div>
+          <div class="map-tools">
+            <button type="button" class="btn btn-ghost btn-small" id="btn-drop-centre"><svg aria-hidden="true"><use href="#i-pin"/></svg>Drop pin at map centre</button>
+            <button type="button" class="btn btn-ghost btn-small" id="btn-reset-view">Reset Map View</button>
+            <span class="map-legend" aria-hidden="true"><span class="lg lg-1">● Team 1</span><span class="lg lg-2">◆ Team 2</span><span class="lg lg-c">★ Answer</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Facilitator toolbar -->
+      <div class="toolbar" role="toolbar" aria-label="Facilitator controls" id="toolbar">
+        <button type="button" class="tool" id="t-pause">Pause Timer</button>
+        <button type="button" class="tool" id="t-resume">Resume Timer</button>
+        <button type="button" class="tool" id="t-reset-timer">Reset Timer</button>
+        <button type="button" class="tool" id="t-end-turn">End Turn</button>
+        <button type="button" class="tool" id="t-reset-guess">Reset Team’s Guess</button>
+        <button type="button" class="tool" id="t-reset-round">Reset Current Round</button>
+        <button type="button" class="tool" id="t-skip">Skip Question</button>
+        <button type="button" class="tool" id="t-reveal">Reveal Answer</button>
+        <button type="button" class="tool tool-danger" id="t-end-game">End Game Early</button>
+      </div>
+    </section>
+
+    <!-- ===================== SUDDEN DEATH INTRO ===================== -->
+    <section class="screen screen-sudden" id="screen-tiebreak" aria-labelledby="tb-title" hidden>
+      <div class="sudden-card">
+        <p class="sudden-small" id="tb-kicker">IT’S A TIE!</p>
+        <h2 id="tb-title" class="sudden-title">WELCOME TO SUDDEN DEATH</h2>
+        <p class="sudden-sub">ONE EXPERT CHALLENGE WILL DECIDE THE WINNER</p>
+        <ul class="sudden-rules">
+          <li>Each team gets one secret guess.</li>
+          <li>No standard points — the closest pin to the answer wins.</li>
+          <li>Being in the right country does not end it early; both teams always guess.</li>
+        </ul>
+        <p class="sudden-score" id="tb-score"></p>
+        <button type="button" class="btn btn-hero" id="btn-tb-begin">Bring on the Expert Question</button>
+      </div>
+    </section>
+
+    <!-- ===================== END / WINNER ===================== -->
+    <section class="screen" id="screen-end" aria-labelledby="end-title" hidden>
+      <div class="panel panel-wide end-panel">
+        <p class="eyebrow">Final destination</p>
+        <h2 id="end-title" class="winner-title" tabindex="-1"></h2>
+        <p class="champion-msg" id="champion-msg"></p>
+        <div class="final-scores" id="final-scores"></div>
+        <p class="method-note" id="method-note"></p>
+        <h3 class="journey-title">Your World Journey</h3>
+        <div class="journey-grid" id="journey-grid"></div>
+        <div class="end-actions">
+          <button type="button" class="btn btn-primary" id="btn-again">Play Again with Same Teams</button>
+          <button type="button" class="btn btn-secondary" id="btn-new-setup">New Game Setup</button>
+          <button type="button" class="btn btn-secondary" id="btn-highlights">View Cultural Highlights</button>
+          <button type="button" class="btn btn-secondary" id="btn-end-credits">View Credits and Sources</button>
+          <button type="button" class="btn btn-ghost" id="btn-end-mute" aria-pressed="false">Mute</button>
+          <button type="button" class="btn btn-ghost tool-danger" id="btn-restart">Restart Entire Game</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ SOUNDBOARD (floating, draggable) ============ -->
+  <section class="soundboard" id="soundboard" aria-labelledby="sb-title" hidden>
+    <div class="sbd-head" id="sbd-head">
+      <h2 id="sb-title">Soundboard <span class="sbd-mode" id="sbd-mode"></span></h2>
+      <span class="drag-hint" aria-hidden="true">drag ✥</span>
+      <button type="button" class="icon-btn small" id="sbd-collapse" aria-expanded="true" aria-controls="sbd-body">Collapse</button>
+      <button type="button" class="icon-btn small" id="sbd-close" aria-label="Close soundboard">✕</button>
+    </div>
+    <div class="sbd-body" id="sbd-body">
+      <div class="sbd-grid" id="sbd-grid"></div>
+      <div class="sbd-foot">
+        <button type="button" class="btn btn-danger btn-small" id="sbd-stop">Stop All Sounds</button>
+        <label class="toggle small"><input type="checkbox" id="sbd-edit"><span>Edit favourites / hide</span></label>
+        <label class="toggle small"><input type="checkbox" id="sbd-shortcuts"><span>Shift+number shortcuts</span></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DIALOGS ============ -->
+  <dialog class="dialog" id="dlg-confirm" aria-labelledby="dlg-confirm-title">
+    <form method="dialog" class="dialog-inner">
+      <h2 id="dlg-confirm-title"></h2>
+      <div id="dlg-confirm-body"></div>
+      <div class="dialog-actions" id="dlg-confirm-actions"></div>
+    </form>
+  </dialog>
+
+  <dialog class="dialog dialog-wide" id="dlg-settings" aria-labelledby="dlg-settings-title">
+    <div class="dialog-inner">
+      <h2 id="dlg-settings-title">Sound &amp; Display Settings</h2>
+      <div class="settings-grid">
+        <div>
+          <h3>Volume</h3>
+          <label class="slider-row" for="vol-master">Master <input type="range" id="vol-master" min="0" max="100" step="1"><output for="vol-master" id="vol-master-out"></output></label>
+          <label class="slider-row" for="vol-music">Music <input type="range" id="vol-music" min="0" max="100" step="1"><output for="vol-music" id="vol-music-out"></output></label>
+          <label class="slider-row" for="vol-sfx">Sound effects <input type="range" id="vol-sfx" min="0" max="100" step="1"><output for="vol-sfx" id="vol-sfx-out"></output></label>
+          <label class="toggle"><input type="checkbox" id="set-mute"><span>Mute all sound</span></label>
+          <label class="toggle"><input type="checkbox" id="set-lobby"><span>Gentle lobby music on menu screens</span></label>
+          <button type="button" class="btn btn-danger btn-small" id="set-stop">Stop All Sounds</button>
+        </div>
+        <div>
+          <h3>Sound mode</h3>
+          <select id="set-mode" aria-label="Sound mode">
+            <option value="professional">Professional</option>
+            <option value="fun">Fun</option>
+            <option value="chaotic">Chaotic</option>
+            <option value="custom">Custom</option>
+          </select>
+          <fieldset class="custom-cats" id="custom-cats">
+            <legend>Custom sound categories</legend>
+          </fieldset>
+        </div>
+        <div>
+          <h3>Display &amp; timing</h3>
+          <label class="toggle"><input type="checkbox" id="set-reduced"><span>Reduce motion (no confetti or animations)</span></label>
+          <label class="toggle"><input type="checkbox" id="set-keep-timer"><span>Keep the turn timer running while this panel is open</span></label>
+          <p class="help">Preferences are remembered for this browser session.</p>
+        </div>
+      </div>
+      <div class="dialog-actions"><button type="button" class="btn btn-primary" id="set-close">Done</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="dialog dialog-wide" id="dlg-info" aria-labelledby="dlg-info-title">
+    <div class="dialog-inner prose">
+      <h2 id="dlg-info-title">About Where in the World?</h2>
+      <p>An original team game about where foods, traditions, objects, music, inventions, wildlife, games, buildings, crafts and natural wonders come from — and the people and cultures behind them.</p>
+      <h3>Our approach to culture</h3>
+      <p>Lived experience is treated as expertise. Questions were written to be respectful and factually supported, to note shared or disputed origins, and to avoid sacred or restricted material. Where an item belongs to several countries, all of them are accepted. If someone in the room knows more about a topic — invite them to share!</p>
+      <h3>About the map</h3>
+      <p>Country boundaries come from <strong>Natural Earth, Admin 0 – Countries, 1:50m scale, version 5.1.2</strong> (public domain), drawn with the Leaflet library. This map is not politically neutral or perfectly authoritative: border and territory representations vary depending on legal and political perspective, and Natural Earth follows its own documented de facto policy. Some territories (for example Greenland, Puerto Rico and Western Sahara) appear as separate shapes. Coastlines are simplified, so small islands may look approximate.</p>
+      <p>To be fair to islands and coastlines, a pin in the sea within 50 km of the answer marker, or within 25 km of the correct country’s coastline, counts as the correct country. Distances are great-circle (haversine) distances to the answer marker, rounded to the nearest kilometre.</p>
+      <h3>Keyboard</h3>
+      <ul>
+        <li>Tab through every control; Enter or Space activates buttons.</li>
+        <li>On the focused map: arrow keys pan, + and − zoom, then press “Drop pin at map centre”.</li>
+        <li>Or type a country name in the list box and press “Place pin”.</li>
+        <li>Shortcuts (when not typing): <kbd>L</kbd> lock in, <kbd>P</kbd> pause/resume, <kbd>M</kbd> mute.</li>
+        <li>Optional soundboard shortcuts use <kbd>Shift</kbd> + number, so they never clash with map keys.</li>
+      </ul>
+      <h3>Content review</h3>
+      <p>Questions have been reviewed internally against the sources listed with each answer. We recommend a review by people from the communities represented before high-profile use. Corrections are welcome — see README.md.</p>
+      <div class="dialog-actions"><button type="button" class="btn btn-primary" data-close>Close</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="dialog dialog-wide" id="dlg-credits" aria-labelledby="dlg-credits-title">
+    <div class="dialog-inner prose">
+      <h2 id="dlg-credits-title">Credits and Sources</h2>
+      <div id="credits-body"></div>
+      <div class="dialog-actions"><button type="button" class="btn btn-primary" data-close>Close</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="dialog dialog-wide" id="dlg-highlights" aria-labelledby="dlg-highlights-title">
+    <div class="dialog-inner prose">
+      <h2 id="dlg-highlights-title">Cultural Highlights</h2>
+      <div id="highlights-body"></div>
+      <div class="dialog-actions"><button type="button" class="btn btn-primary" data-close>Close</button></div>
+    </div>
+  </dialog>
+
+  <div class="toast-region" id="toasts" aria-live="polite" aria-atomic="false"></div>
+  <div class="visually-hidden" id="announcer" aria-live="assertive" aria-atomic="true"></div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+  <noscript><p class="noscript">This game needs JavaScript enabled.</p></noscript>
+
+  <!-- Scripts: all local, no internet connection required -->
+  <script src="assets/vendor/leaflet/leaflet.js"></script>
+  <script src="assets/map/countries.js"></script>
+  <script src="assets/images/image-credits.js"></script>
+  <script src="questions.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
