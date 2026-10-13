@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Where in the World? — taking you to the game</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0f1c3f; color: #fff;
+      font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif; text-align: center; padding: 20px; }
+    a { color: #ffc23d; font-weight: 700; }
+  </style>
+  <script>
+    /* GitHub Pages shows this page for any address that doesn't exist on the site.
+       If the address contains a 4-letter room code (e.g. /where-in-the-world/ABCD or ?join=ABCD),
+       send the player straight to the game's join screen with the code filled in. */
+    (function () {
+      var base = '/where-in-the-world/';
+      var text = location.pathname + ' ' + location.search;
+      var m = /[?&]join=([A-Za-z]{4})\b/.exec(location.search) || /\/([A-Za-z]{4})\/?$/.exec(location.pathname);
+      location.replace(base + (m ? '?join=' + m[1].toUpperCase() : ''));
+    })();
+  </script>
+</head>
+<body>
+  <p>Taking you to <a href="/where-in-the-world/">Where in the World?</a>…</p>
+</body>
+</html>
