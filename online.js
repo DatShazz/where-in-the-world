@@ -175,7 +175,7 @@
     return keys.map((k) => {
       const r = res[k]; const s = styleOf(k); const t = (st.teams || {})[k] || { name: k };
       const where = r.none ? 'No pin placed' : `Pin: ${esc(r.name)}${st.s.distance ? ` · ${fmtKm(r.km)} from the answer` : ''}${r.auto ? ' · auto-locked' : ''}`;
-      const conf = r.conf && !st.reveal.tb ? ` · Confidence: ${esc(r.conf)}` : '';
+      const conf = st.s.confidence && r.conf && !st.reveal.tb ? ` · Confidence: ${esc(r.conf)}` : '';
       const pts = st.reveal.tb ? '' : `<span class="rc-points">+${r.points || 0}</span>`;
       return `<div class="result-card${k === highlightKey ? ' mine' : ''}" style="border-left-color:${s.col}"><div class="rc-head"><span class="rc-name">${badge(k)} ${esc(t.name)}</span>${pts}</div><p class="rc-detail">${where}${conf}</p><p class="rc-reason">${esc(r.reason || '')}</p></div>`;
     }).join('');

@@ -59,7 +59,7 @@ Live at **https://datshazz.github.io/where-in-the-world/**.
    - **Unanimous vote:** everyone votes for the same teammate.
    - **Volunteer:** "I'll lead"; a teammate can object.
    - **Let fate decide:** the game picks someone at random.
-4. Each round, everyone sees the clue on their own device. Teammates tap the map to drop **suggestion pins** that only their team sees. The **leader** places the official pin, picks a confidence rating and locks in.
+4. Each round, everyone sees the clue on their own device. Teammates tap the map to drop **suggestion pins** that only their team sees. The **leader** places the official pin and locks in.
 
 **How it differs from the one-screen game**
 - All teams guess **at the same time** during the 60 seconds, and pins stay hidden until the reveal.
@@ -144,7 +144,7 @@ All audio is original and synthesised at runtime. There are no recordings, voice
 | Mode | What you get |
 |---|---|
 | Professional | Timer, lock-in, reveal and applause only; a 4-button soundboard |
-| Fun | Crowd and confidence reactions; the full 22-button soundboard |
+| Fun | Crowd and answer reactions; the full 22-button soundboard |
 | Chaotic | Fun plus extra layering (still workplace-safe) |
 | Custom | Toggle 8 sound categories in Settings |
 
@@ -218,7 +218,7 @@ Tested in a Chromium browser:
 - **Flow:** intro → setup → rules → teams → start → game → reveal → end.
 - **Setup:** duration presets and auto-rounds (2/4/6/8/9/11); custom-duration validation; manual round override.
 - **Teams:** random names and rerolls; a very long team name (truncated in the scorebar, wrapped elsewhere).
-- **Turns:** Team 1’s pin is hidden from Team 2; confidence is required before locking in; pins are placed by clicking the map; Pause/Resume works; a timeout auto-locks a placed pin.
+- **Turns:** Team 1’s pin is hidden from Team 2; pins are placed by clicking the map; Pause/Resume works; a timeout auto-locks a placed pin.
 - **Scoring:** correct (3) vs. other team (1); a lone guess (2/0); neither team submitting (0/0, with a replay option).
 - **Facilitator tools:** Reset Current Round removes awarded points; Skip Question; Reveal Answer with pending turns; End Game Early with the tie prompt.
 - **Sudden Death:** two exact ties lead to the correct-count, then average-proximity tie-breaks, and to joint winners when everything is level.

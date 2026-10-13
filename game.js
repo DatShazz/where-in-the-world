@@ -605,7 +605,7 @@
    * ================================================================= */
   const DEFAULT_SETTINGS = {
     duration: '25', customMinutes: 45, rounds: null, roundsManual: false, difficulty: 'mixed', category: 'all',
-    images: true, audioClues: true, spotlights: true, confidence: true, distance: true, tiebreaker: true,
+    images: true, audioClues: true, spotlights: true, confidence: false, distance: true, tiebreaker: true,
     random: true, noRepeat: true, warnings: true, hints: true, alternate: false,
   };
   let settings = Object.assign({}, DEFAULT_SETTINGS);
@@ -740,14 +740,14 @@
     const catInput = f.querySelector(`input[name="category"][value="${CSS.escape(settings.category)}"]`);
     if (catInput) catInput.checked = true;
     const sm = f.querySelector(`input[name="soundmode"][value="${Sound.prefs.mode}"]`); if (sm) sm.checked = true;
-    const map = { images: 'opt-images', audioClues: 'opt-audioclues', spotlights: 'opt-spotlights', confidence: 'opt-confidence', distance: 'opt-distance', tiebreaker: 'opt-tiebreaker', random: 'opt-random', noRepeat: 'opt-norepeat', warnings: 'opt-warnings', hints: 'opt-hints', alternate: 'opt-alternate' };
+    const map = { images: 'opt-images', audioClues: 'opt-audioclues', spotlights: 'opt-spotlights', distance: 'opt-distance', tiebreaker: 'opt-tiebreaker', random: 'opt-random', noRepeat: 'opt-norepeat', warnings: 'opt-warnings', hints: 'opt-hints', alternate: 'opt-alternate' };
     Object.entries(map).forEach(([k, id]) => { $('#' + id).checked = !!settings[k]; });
     updateRoundsUI();
     updateHistoryHelp();
   }
   function readOptionToggles() {
     settings.images = $('#opt-images').checked; settings.audioClues = $('#opt-audioclues').checked;
-    settings.spotlights = $('#opt-spotlights').checked; settings.confidence = $('#opt-confidence').checked;
+    settings.spotlights = $('#opt-spotlights').checked; settings.confidence = false; // confidence ratings removed at the facilitator's request
     settings.distance = $('#opt-distance').checked; settings.tiebreaker = $('#opt-tiebreaker').checked;
     settings.random = $('#opt-random').checked; settings.noRepeat = $('#opt-norepeat').checked;
     settings.warnings = $('#opt-warnings').checked; settings.hints = $('#opt-hints').checked; settings.alternate = $('#opt-alternate').checked;
@@ -1463,7 +1463,7 @@
     const g = game.current.guesses[t];
     const dist = info && settings.distance ? ` · ${fmtKm(info.km)} from the answer` : '';
     const where = g ? `Pin: ${esc(g.name)}${g.snapped ? ' (coastline)' : ''}${dist}${g.auto ? ' · auto-locked' : ''}` : 'No pin placed';
-    const c = conf && !game.current.tiebreak ? ` · Confidence: ${esc(conf)}` : '';
+    const c = settings.confidence && conf && !game.current.tiebreak ? ` · Confidence: ${esc(conf)}` : '';
     const pts = points == null ? '' : `<span class="rc-points">+${points}</span>`;
     return `<div class="result-card t${t + 1}"><div class="rc-head"><span class="rc-name">${t === 0 ? '●' : '◆'} ${esc(teamName(t))}</span>${pts}</div><p class="rc-detail">${where}${c}</p><p class="rc-reason">${esc(reason)}</p></div>`;
   }
@@ -1650,8 +1650,8 @@
       return b;
     };
     const mc = best(true); const mi = best(false);
-    items.push(['Most confident correct answer', mc && mc.rank ? `${teamName(mc.t)} — ${mc.conf} about ${mc.r.q.answerName}, and right!` : mc ? `${teamName(mc.t)} found ${mc.r.q.answerName}` : 'No correct countries this time — plenty of new discoveries!']);
-    items.push(['Most confident incorrect answer', mi && mi.rank >= 3 ? `${teamName(mi.t)} — ${mi.conf} on ${mi.r.q.answerName} (it was ${mi.r.q.correctCountry.split(' (')[0]})` : 'No overconfident misses — well judged!']);
+    if (settings.confidence) items.push(['Most confident correct answer', mc && mc.rank ? `${teamName(mc.t)} — ${mc.conf} about ${mc.r.q.answerName}, and right!` : mc ? `${teamName(mc.t)} found ${mc.r.q.answerName}` : 'No correct countries this time — plenty of new discoveries!']);
+    if (settings.confidence) items.push(['Most confident incorrect answer', mi && mi.rank >= 3 ? `${teamName(mi.t)} — ${mi.conf} on ${mi.r.q.answerName} (it was ${mi.r.q.correctCountry.split(' (')[0]})` : 'No overconfident misses — well judged!']);
     if (game.solo) {
       const near = rounds.filter((r) => r.result.info[0] && !r.result.info[0].correct && r.result.info[0].km <= SOLO_NEAR_KM).length;
       items.push(['Near misses (within 1,000 km)', String(near)]);
