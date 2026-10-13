@@ -610,7 +610,7 @@
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let teams = ['', ''];
   let game = null;
-  const ui = { reducedMotion: false, keepTimerInSettings: false, screen: 'intro' };
+  const ui = { reducedMotion: false, keepTimerInSettings: false, screen: 'intro', mode: 'local' }; // mode: 'local' (one screen) | 'online' (hosted rooms)
 
   const minutesSelected = () => (settings.duration === 'custom' ? Number(settings.customMinutes) : Number(settings.duration));
   const perRoundSeconds = () => TIMING.clueIntro + 2 * TIMING.turn + TIMING.handover + TIMING.reveal + (settings.spotlights ? TIMING.spotlight : 0);
@@ -639,10 +639,10 @@
    * Soft rules (penalties): ≤2 consecutive questions from one category, varied regions,
    * no repeated countries, avoid recently played questions, Expert Explorer prefers Expert.
    */
-  function pickQuestion() {
-    const pool = questionPool().filter((q) => !game.usedIds.has(q.id));
+  function pickQuestion(ctx = game) {
+    const pool = questionPool().filter((q) => !ctx.usedIds.has(q.id));
     if (!pool.length) return null;
-    const seq = game.sequence.map((id) => DATA.MAIN.find((q) => q.id === id)).filter(Boolean);
+    const seq = ctx.sequence.map((id) => DATA.MAIN.find((q) => q.id === id)).filter(Boolean);
     const last = seq[seq.length - 1]; const last2 = seq[seq.length - 2];
     const usedCodes = new Set(seq.flatMap((q) => q.acceptedCountryCodes));
     const regionCount = {}; seq.forEach((q) => { regionCount[regionOf(q)] = (regionCount[regionOf(q)] || 0) + 1; });
@@ -670,8 +670,8 @@
     }
     return best;
   }
-  function pickTiebreaker() {
-    const pool = DATA.TIEBREAKERS.filter((q) => !game.tb.used.has(q.id));
+  function pickTiebreaker(used = game.tb.used) {
+    const pool = DATA.TIEBREAKERS.filter((q) => !used.has(q.id));
     return pool.length ? pick(pool) : null;
   }
 
@@ -699,9 +699,17 @@
     }
   }
 
+  /** Switches between the one-screen game and hosting an online game (shows/hides online-only fields). */
+  function setMode(mode) {
+    ui.mode = mode;
+    $$('[data-online-only]').forEach((el) => { el.hidden = mode !== 'online'; });
+    $$('[data-local-only]').forEach((el) => { el.hidden = mode === 'online'; });
+  }
+
   /* ---------- Intro ---------- */
   function bindIntro() {
     $('#btn-play').addEventListener('click', () => {
+      setMode('local');
       Sound.ensure();
       Sound.play('intro', { major: true });
       goTo('setup');
@@ -813,7 +821,11 @@
 
   /* ---------- Rules ---------- */
   function bindRules() {
-    $('#btn-rules-continue').addEventListener('click', () => { Sound.play('click'); prepareTeamsScreen(); goTo('teams'); });
+    $('#btn-rules-continue').addEventListener('click', () => {
+      Sound.play('click');
+      if (ui.mode === 'online' && window.WITW_ONLINE) { window.WITW_ONLINE.createRoom(); return; }
+      prepareTeamsScreen(); goTo('teams');
+    });
   }
 
   /* ---------- Teams ---------- */
@@ -1677,7 +1689,16 @@
     $('#dlg-confirm-actions').innerHTML = buttons.map((b) => `<button type="submit" class="btn ${b.cls || 'btn-secondary'}" value="${esc(b.value)}">${esc(b.label)}</button>`).join('');
     dlg.returnValue = '';
     return new Promise((resolve) => {
-      dlg.addEventListener('close', () => resolve(dlg.returnValue || 'cancel'), { once: true });
+      // Resolve straight from the button press (the dialog 'close' event can be delayed in background tabs);
+      // the 'close' event still covers Esc / cancel.
+      let settled = false;
+      const onClose = () => { if (!dlg.open) done(dlg.returnValue); }; // ignore a late close event from an earlier dialog
+      const done = (v) => { if (settled) return; settled = true; dlg.removeEventListener('close', onClose); resolve(v || 'cancel'); };
+      $('#dlg-confirm-actions').onclick = (e) => {
+        const b = e.target.closest('button[value]'); if (!b) return;
+        e.preventDefault(); done(b.value); dlg.close(b.value);
+      };
+      dlg.addEventListener('close', onClose);
       openDialog(dlg, { pauseTimer });
       const first = dlg.querySelector('.dialog-actions button'); if (first) first.focus();
     });
@@ -1909,12 +1930,21 @@
     bindDialogs(); bindSettings(); bindSoundboard(); bindKeyboard();
     settingsToForm();
     syncSoundUI();
+    setMode('local');
 
     // Generic Back buttons
     $$('[data-nav]').forEach((b) => b.addEventListener('click', () => { Sound.play('click'); if (b.dataset.nav === 'teams') prepareTeamsScreen(); goTo(b.dataset.nav); }));
     // Pause the turn timer when the tab is hidden; resume automatically when visible again
     document.addEventListener('visibilitychange', () => { if (document.hidden) Timer.pause('hidden'); else Timer.resume('hidden'); });
     window.addEventListener('resize', () => { if (ui.screen === 'game') MapView.invalidate(); });
+
+    // Public helpers for the online (multi-device) module in online.js
+    window.WITW_API = {
+      DATA, Sound, Geo, esc, fmtKm, fmtClock, toast, announce, confirmDialog, openDialog, goTo, setMode,
+      pickQuestion, pickTiebreaker, History, shuffle, pick, rand, clamp, confetti, stopConfetti,
+      getSettings: () => settings, minutesSelected, TEAM_NAMES, CHAMPION_LINES, CAT_ICON, CONFIDENCE_RANK,
+      SEA_TOLERANCE_KM, COAST_SNAP_KM, TURN_SECONDS, ui, settingsToForm, isLocalGameActive: () => !!(game && !game.ended),
+    };
 
     if (!DATA.MAIN.length) toast('Question bank failed to load — check that questions.js is present.', 'warn');
     if (!window.L) console.warn('Leaflet failed to load; the country list fallback will be used.');

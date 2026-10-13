@@ -35,6 +35,49 @@ Then open http://localhost:8080.
 
 ---
 
+## 1b. Online play — 2 to 6 teams on their own devices (needs internet)
+
+Live at **https://datshazz.github.io/where-in-the-world/**.
+
+**Host (facilitator)**
+1. Open the game, then click **Host an online game**.
+2. Choose the session length and options, and set **Number of teams (2–6)**.
+3. Continue past the rules. You'll get a 4-letter room code and a join link to share in your meeting chat.
+4. In the lobby you can rename teams, move or remove players, **Shuffle players into teams**, appoint a leader, or use **Let fate pick missing leaders**.
+5. Click **Start Game** once every team with players has a leader. Empty teams are removed automatically.
+6. Screen-share the host screen. It shows the clue, the timer, each team's status (*Thinking…*, *Pin placed…*, *Locked ✓*) and the reveal.
+
+**Players**
+1. Open the join link, or the website, then **Join a game**. Enter the code and a name.
+2. Pick a team.
+3. Choose a leader in one of three ways:
+   - **Unanimous vote:** everyone votes for the same teammate.
+   - **Volunteer:** "I'll lead"; a teammate can object.
+   - **Let fate decide:** the game picks someone at random.
+4. Each round, everyone sees the clue on their own device. Teammates tap the map to drop **suggestion pins** that only their team sees. The **leader** places the official pin, picks a confidence rating and locks in.
+
+**How it differs from the one-screen game**
+- All teams guess **at the same time** during the 60 seconds, and pins stay hidden until the reveal.
+- **Scoring:**
+  - 3 points for the correct country.
+  - If any team is correct, the incorrect guesses score 1.
+  - Otherwise the closest guess scores 2 (ties share it) and the others score 1.
+  - No pin scores 0.
+  - With two teams this matches the House Rules exactly.
+- **When the timer ends,** a leader's placed pin is locked automatically.
+- **A tie for first** sends only the tied teams to Expert Sudden Death, with the same tie-break chain as the one-screen game.
+- **If the host's page reloads,** use **Resume hosting room XXXX** on the start screen. Players who reload rejoin automatically.
+- **Closing the room** deletes it from the database. Players are told the game has ended.
+
+**Behind the scenes:** online play uses a free Google Firebase project (`where-in-the-world-44d5d`) for live syncing:
+- **Realtime Database in Singapore:** carries the game between devices.
+- **Anonymous sign-in:** players join without accounts.
+- **Settings:** connection settings are in `online-config.js`, and the access rules are in `database.rules.json`, already published. For example, only a team's leader can write that team's pin, and other teams can't read it.
+- **Data stored:** only player first names or nicknames and game moves, and only until the host closes the room.
+- **Network:** players' networks must allow `*.firebasedatabase.app` and `*.googleapis.com`.
+
+---
+
 ## 2. Facilitating
 
 | Session | Pick | Rounds (auto) |
@@ -129,6 +172,9 @@ If an image is missing or images are switched off, the game shows the clip-art c
 index.html            Page structure (all screens and dialogs)
 styles.css            Visual design, responsive layout, focus and reduced-motion styles
 game.js               Game engine (audio, map, scoring, timers, flow, soundboard)
+online.js / online.css  Online multi-device play (lobby, leaders, realtime rounds)
+online-config.js      Firebase project settings (public identifiers)
+database.rules.json   Firebase security rules (published in the Firebase console)
 questions.js          Question bank, editable (format documented at the top of the file)
 questions.json        Full-schema export of the bank (generated)
 assets/map/           Natural Earth country data (generated from tools/)

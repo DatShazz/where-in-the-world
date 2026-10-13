@@ -7,6 +7,7 @@
   <meta name="description" content="A team game show about where traditions, foods, inventions, sounds and wonders come from.">
   <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="online.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -64,6 +65,15 @@
         <p class="lede">Inspect the clue, share what you know and plant your team’s pin on the map. You may recognise it from home, travel, family, food, music or pure brilliant deduction.</p>
         <div class="intro-actions">
           <button type="button" class="btn btn-hero" id="btn-play"><svg><use href="#i-pin"/></svg>Play</button>
+          <p class="mode-note">One shared screen, two teams, works offline.</p>
+        </div>
+        <div class="online-entry" aria-labelledby="online-entry-title">
+          <h2 id="online-entry-title" class="online-entry-title">Play online — everyone on their own device</h2>
+          <p>Up to 6 teams join with a room code. Each team picks a leader who places the team’s pin live.</p>
+          <div class="online-entry-actions">
+            <button type="button" class="btn btn-secondary" id="btn-host-online">Host an online game</button>
+            <button type="button" class="btn btn-primary" id="btn-join-online">Join a game</button>
+          </div>
         </div>
         <div class="intro-sound">
           <label for="intro-sound-mode">Sound mode</label>
@@ -115,6 +125,15 @@
             <p class="help" id="rounds-help"></p>
           </fieldset>
 
+          <fieldset class="field-group" data-online-only hidden>
+            <legend>Online teams</legend>
+            <div class="stepper">
+              <label for="online-teams">Number of teams (2–6)</label>
+              <input type="number" id="online-teams" min="2" max="6" step="1" value="3" inputmode="numeric">
+            </div>
+            <p class="help">Players join from their own devices and choose a team in the lobby. Empty teams are removed when the game starts.</p>
+          </fieldset>
+
           <div class="two-col">
             <fieldset class="field-group">
               <legend>Difficulty</legend>
@@ -149,7 +168,7 @@
               <label class="toggle"><input type="checkbox" id="opt-norepeat" checked><span>Avoid questions played before</span></label>
               <label class="toggle"><input type="checkbox" id="opt-warnings" checked><span>Session time warnings</span></label>
               <label class="toggle"><input type="checkbox" id="opt-hints" checked><span>Allow extra hints</span></label>
-              <label class="toggle"><input type="checkbox" id="opt-alternate"><span>Alternate which team goes first</span></label>
+              <label class="toggle" data-local-only><input type="checkbox" id="opt-alternate"><span>Alternate which team goes first</span></label>
             </div>
             <p class="help" id="history-help"></p>
             <button type="button" class="btn btn-ghost btn-small" id="btn-clear-history">Forget previously played questions</button>
@@ -197,6 +216,17 @@
               <li>Distances are measured to the answer marker. A pin in the sea within 50 km of the answer, or within 25 km of the correct coastline, counts as the correct country.</li>
             </ul>
           </div>
+        </div>
+        <div class="online-rules" data-online-only hidden>
+          <h3>Online play</h3>
+          <ul>
+            <li>2 to 6 teams. Every player joins on their own device with the room code.</li>
+            <li>Each team chooses a <strong>team leader</strong>: a unanimous vote, a volunteer (unless a teammate objects), or “let fate decide”.</li>
+            <li>All teams guess <strong>at the same time</strong> during the 60 seconds. Teammates drop suggestion pins that only their own team can see; only the leader places and locks the official pin.</li>
+            <li>Scoring with more than two teams: <strong>3</strong> for the correct country; if no team is correct, the closest guess scores <strong>2</strong> (ties share it) and the others <strong>1</strong>; if any team is correct, incorrect guesses score <strong>1</strong>; no pin scores <strong>0</strong>.</li>
+            <li>When the timer ends, any pin the leader has placed is locked automatically.</li>
+            <li>A tie for first place sends only the tied teams to Expert Sudden Death.</li>
+          </ul>
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost" data-nav="setup">Back</button>
@@ -415,7 +445,84 @@
         </div>
       </div>
     </section>
+    <!-- ===================== ONLINE: JOIN ===================== -->
+    <section class="screen" id="screen-join" aria-labelledby="join-title" hidden>
+      <div class="panel join-panel">
+        <p class="eyebrow">Online game</p>
+        <h2 id="join-title" class="screen-title">Join a Game</h2>
+        <form id="join-form" novalidate>
+          <div class="join-fields">
+            <label for="join-code">Room code</label>
+            <input type="text" id="join-code" class="code-input" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" aria-describedby="join-error">
+            <label for="join-name">Your name</label>
+            <input type="text" id="join-name" maxlength="24" autocomplete="nickname" placeholder="First name or nickname" aria-describedby="join-error">
+          </div>
+          <p class="field-error" id="join-error" role="alert"></p>
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" data-nav="intro">Back</button>
+            <button type="submit" class="btn btn-primary" id="btn-join-submit">Join Game</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===================== ONLINE: HOST LOBBY ===================== -->
+    <section class="screen" id="screen-host-lobby" aria-labelledby="hl-title" hidden>
+      <div class="panel panel-wide" id="host-lobby"></div>
+    </section>
+
+    <!-- ===================== ONLINE: HOST GAME SCREEN ===================== -->
+    <section class="screen screen-game" id="screen-host-game" aria-labelledby="hg-heading" hidden>
+      <h2 id="hg-heading" class="visually-hidden">Online game — host screen</h2>
+      <div class="oscorebar" id="hg-scorebar"></div>
+      <div class="game-layout">
+        <aside class="clue-panel" id="hg-panel" aria-label="Clue and results"></aside>
+        <div class="map-area">
+          <div class="map-wrap"><div id="host-map" class="map" tabindex="0" role="application" aria-label="World map. Team pins appear here after each reveal."></div></div>
+          <div class="map-tools">
+            <button type="button" class="btn btn-ghost btn-small" id="hg-reset-view">Reset Map View</button>
+            <span class="map-legend" id="hg-legend" aria-hidden="true"></span>
+          </div>
+        </div>
+      </div>
+      <div class="toolbar" role="toolbar" aria-label="Host controls">
+        <button type="button" class="tool" id="hg-pause">Pause Timer</button>
+        <button type="button" class="tool" id="hg-resume">Resume Timer</button>
+        <button type="button" class="tool" id="hg-hint">Reveal a Hint</button>
+        <button type="button" class="tool" id="hg-reset-round">Reset Current Round</button>
+        <button type="button" class="tool" id="hg-skip">Skip Question</button>
+        <button type="button" class="tool" id="hg-reveal">Reveal Answer</button>
+        <button type="button" class="tool" id="hg-teams">Teams &amp; Players</button>
+        <button type="button" class="tool tool-danger" id="hg-end">End Game Early</button>
+      </div>
+    </section>
+
+    <!-- ===================== ONLINE: PLAYER DEVICE ===================== -->
+    <section class="screen screen-player" id="screen-player" aria-labelledby="pl-title" hidden>
+      <div class="pl-head" id="pl-head"></div>
+      <div class="pl-body" id="pl-body"></div>
+      <div class="pl-game" id="pl-game" hidden>
+        <aside class="clue-panel pl-clue" id="pl-clue" aria-label="Clue"></aside>
+        <div class="pl-mapcol">
+          <div class="map-wrap pl-mapwrap"><div id="player-map" class="map" tabindex="0" role="application" aria-label="World map. Tap or click to place a pin."></div></div>
+          <div class="pl-controls" id="pl-controls"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== ONLINE: FINAL RESULTS ===================== -->
+    <section class="screen" id="screen-online-end" aria-labelledby="oe-title" hidden>
+      <div class="panel panel-wide end-panel" id="online-end"></div>
+    </section>
   </main>
+
+  <dialog class="dialog dialog-wide" id="dlg-teams" aria-labelledby="dlg-teams-title">
+    <div class="dialog-inner">
+      <h2 id="dlg-teams-title">Teams &amp; Players</h2>
+      <div id="dlg-teams-body"></div>
+      <div class="dialog-actions"><button type="button" class="btn btn-primary" data-close>Done</button></div>
+    </div>
+  </dialog>
 
   <!-- ============ SOUNDBOARD (floating, draggable) ============ -->
   <section class="soundboard" id="soundboard" aria-labelledby="sb-title" hidden>
@@ -530,5 +637,11 @@
   <script src="assets/images/image-credits.js"></script>
   <script src="questions.js"></script>
   <script src="game.js"></script>
+  <!-- Online play (needs internet): Firebase SDK stored locally + project settings + online module -->
+  <script src="assets/vendor/firebase/firebase-app-compat.js"></script>
+  <script src="assets/vendor/firebase/firebase-auth-compat.js"></script>
+  <script src="assets/vendor/firebase/firebase-database-compat.js"></script>
+  <script src="online-config.js"></script>
+  <script src="online.js"></script>
 </body>
 </html>

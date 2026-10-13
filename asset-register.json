@@ -497,6 +497,21 @@
       "notes": "Unmodified."
     },
     {
+      "fileName": "assets/vendor/firebase/firebase-*-compat.js",
+      "usedBy": "Online play (lobby, realtime sync)",
+      "assetType": "software library",
+      "assetTitle": "Firebase JavaScript SDK 10.12.2 (app, auth, database compat builds)",
+      "creator": "Google LLC",
+      "originalSourcePage": "https://firebase.google.com/docs/web/setup",
+      "sourcePlatform": "www.gstatic.com/firebasejs/10.12.2",
+      "licence": "Apache License 2.0",
+      "licenceUrl": "https://github.com/firebase/firebase-js-sdk/blob/master/LICENSE",
+      "attributionRequired": true,
+      "attributionText": "Firebase JavaScript SDK © Google LLC, Apache-2.0. Licence text in assets/vendor/firebase/LICENSE.",
+      "downloadDate": "2026-10-13",
+      "notes": "Unmodified. Stored locally so online play does not depend on a third-party script host."
+    },
+    {
       "fileName": "(generated in game.js)",
       "usedBy": "All game sounds, soundboard and audio-clue impressions",
       "assetType": "audio",

@@ -7,6 +7,7 @@ Every asset’s licence was checked on its individual source page (Wikimedia Com
 
 - **Natural Earth** — Admin 0 Countries 1:50m, v5.1.2. Public domain. “Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.” Boundaries follow Natural Earth’s de facto policy; other legal or political perspectives may show some borders differently.
 - **Leaflet 1.9.4** — © Volodymyr Agafonkin and contributors, BSD 2-Clause licence (see `assets/vendor/leaflet/LICENSE`).
+- **Firebase JavaScript SDK 10.12.2** (online play only) — © Google LLC, Apache License 2.0 (see `assets/vendor/firebase/LICENSE`).
 
 ## Audio
 
