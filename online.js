@@ -233,7 +233,7 @@
     const btn = $('#btn-rules-continue'); btn.disabled = true; btn.textContent = 'Creating room…';
     try {
       await Net.connect();
-      const teamsCount = A.clamp(parseInt($('#online-teams').value, 10) || 3, 2, MAX_TEAMS);
+      const teamsCount = A.clamp(parseInt($('#online-teams').value, 10) || 3, 1, MAX_TEAMS);
       let code = null;
       for (let i = 0; i < 10 && !code; i++) {
         const c = randomCode();
@@ -360,7 +360,7 @@
           const t = H.teams[k]; const mem = membersOf(H.players, k); const s = styleOf(k);
           const lname = t.leader ? (H.players[t.leader] || {}).name : null;
           return `<section class="lteam" style="--tc:${s.col};--tsoft:${s.soft}" aria-label="${esc(t.name)}">
-            <header>${badge(k, 'lg')}<h3>${esc(t.name)}</h3><button type="button" class="btn btn-ghost btn-tiny" data-act="rename" data-team="${k}">Rename</button></header>
+            <header>${badge(k, 'lg')}<h3>${esc(t.name)}</h3><button type="button" class="btn btn-ghost btn-tiny" data-act="rename" data-team="${k}">Rename</button>${keysOf(H.teams).length > 1 ? `<button type="button" class="btn btn-ghost btn-tiny tool-danger" data-act="rmteam" data-team="${k}" aria-label="Remove team ${esc(t.name)}">Remove team</button>` : ''}</header>
             <p class="lleader">${lname ? `⭐ Leader: <strong>${esc(lname)}</strong> <span class="how">(${HOW_LABEL[t.how] || ''})</span>` : mem.length ? 'Choosing a leader…' : 'No players yet'}</p>
             <ul class="mlist">${mem.map((u) => member(u, k)).join('') || '<li class="empty">Empty</li>'}</ul>
           </section>`;
@@ -372,6 +372,8 @@
       </div>
       <p class="lobby-status" role="status">${Object.keys(H.players).length} player${Object.keys(H.players).length === 1 ? '' : 's'} joined · ${ready.length} team${ready.length === 1 ? '' : 's'} ready${waiting.length ? ` · waiting for a leader in ${waiting.map((k) => esc(H.teams[k].name)).join(', ')}` : ''}</p>
       <div class="lobby-actions">
+        <button type="button" class="btn btn-secondary" data-act="addteam"${keysOf(H.teams).length >= MAX_TEAMS ? ' disabled' : ''}>+ Add team</button>
+        <button type="button" class="btn btn-secondary" data-act="playhere">Play on this device too</button>
         <button type="button" class="btn btn-secondary" data-act="shuffle">Shuffle players into teams</button>
         <button type="button" class="btn btn-secondary" data-act="fateall">Let fate pick missing leaders</button>
         <button type="button" class="btn btn-ghost tool-danger" data-act="close">Close room</button>
@@ -413,6 +415,56 @@
       const v = await confirmDialog({ title: 'Close this room?', body: '<p>Everyone will be disconnected and the room deleted.</p>', buttons: [{ label: 'Close Room', value: 'yes', cls: 'btn-primary' }, { label: 'Cancel', value: 'no', cls: 'btn-ghost' }], pauseTimer: false });
       if (v === 'yes') closeRoom();
     } else if (act === 'start') startGameFromLobby();
+    else if (act === 'addteam') addTeam();
+    else if (act === 'rmteam') removeTeam(k);
+    else if (act === 'playhere') {
+      // A new tab with rel="noopener" gets its own session, so it joins as a separate player.
+      const a = document.createElement('a');
+      a.href = `${baseUrl()}?join=${H.code}`; a.target = '_blank'; a.rel = 'noopener';
+      document.body.appendChild(a); a.click(); a.remove();
+      toast(`A player screen opened in a new tab — join a team there. If no tab appeared, open ${baseUrl()}?join=${H.code} yourself.`);
+    }
+  }
+
+  /** Adds a team (max 6). Mid-game, a new team starts on 0 and plays from the next round. */
+  async function addTeam() {
+    const used = keysOf(H.teams);
+    if (used.length >= MAX_TEAMS) { toast(`The maximum is ${MAX_TEAMS} teams.`); return; }
+    let i = 0; while (used.includes('t' + i)) i++;
+    const names = new Set(used.map((k) => H.teams[k].name));
+    const name = A.shuffle(A.TEAM_NAMES).find((n) => !names.has(n)) || `Team ${i + 1}`;
+    H.teams['t' + i] = { name, leader: null, how: '', since: 0, cleared: 0, score: 0 };
+    await push();
+    Sound.play('confirm');
+    toast(`${name} added${H.phase === 'lobby' ? '' : ' — it joins from the next round'}.`);
+    renderAny();
+  }
+
+  /** Removes a team. Its players become team-less (they can join another team); its points are removed. */
+  async function removeTeam(k) {
+    const t = H.teams[k]; if (!t) return;
+    if (keysOf(H.teams).length <= 1) { toast('The game needs at least one team.'); return; }
+    const mem = membersOf(H.players, k);
+    const v = await confirmDialog({
+      title: `Remove ${t.name}?`,
+      body: `<p>${mem.length ? `${mem.length} player${mem.length === 1 ? '' : 's'} will be moved to “Not in a team” and can join another team.` : 'This team has no players.'}${H.phase !== 'lobby' ? ' Its points are removed from the scoreboard.' : ''}</p>`,
+      buttons: [{ label: 'Remove Team', value: 'yes', cls: 'btn-primary' }, { label: 'Cancel', value: 'no', cls: 'btn-ghost' }], pauseTimer: false,
+    });
+    if (v !== 'yes' || !H || !H.teams[k]) return;
+    delete H.teams[k];
+    H.history.forEach((h) => { if (h.points) delete h.points[k]; if (h.results) delete h.results[k]; });
+    if (H.round && H.round.eligible) H.round.eligible = H.round.eligible.filter((x) => x !== k);
+    if (H.sd && H.sd.contenders) H.sd.contenders = H.sd.contenders.filter((x) => x !== k);
+    computeScores();
+    const upd = {}; mem.forEach((u) => { upd[u + '/team'] = null; });
+    if (mem.length) await Net.ref(H.code, 'players').update(upd);
+    await Net.ref(H.code, 'guesses/' + k).remove(); await Net.ref(H.code, 'suggest/' + k).remove();
+    await push();
+    toast(`${t.name} removed.`);
+    if (H.phase === 'question' && H.round && !H.round.eligible.length) { H.round.revealed = true; H.phase = 'reveal'; H.reveal = { qid: H.round.qid, tb: !!H.round.tb, results: {} }; push(); }
+    if (H.phase === 'question') onHostGuesses();
+    if (H.phase === 'lobby') renderHostLobby(); else renderHostGame(true);
+    if ($('#dlg-teams').open) renderTeamsDialog();
   }
   function renderAny() {
     if (!H) return;
@@ -422,7 +474,7 @@
 
   async function startGameFromLobby() {
     const active = keysOf(H.teams).filter((k) => membersOf(H.players, k).length);
-    if (active.length < 2) { toast('At least two teams need players before you can start.', 'warn'); return; }
+    if (active.length < 1) { toast('At least one team needs a player before you can start. Playing alone? Use “Play on this device too”.', 'warn'); return; }
     const noLeader = active.filter((k) => !H.teams[k].leader);
     if (noLeader.length) { toast(`Still waiting for a leader in: ${noLeader.map((k) => H.teams[k].name).join(', ')}. You can use “Let fate pick missing leaders”.`, 'warn'); return; }
     const loose = Object.keys(H.players).filter((u) => !H.players[u].team || !H.teams[H.players[u].team]).length;
@@ -542,11 +594,13 @@
     const wrong = keys.filter((k) => info[k] && !info[k].correct);
     const minKm = wrong.length ? Math.min(...wrong.map((k) => info[k].km)) : null;
     const tiedClosest = wrong.filter((k) => info[k].km === minKm).length;
+    const solo = keys.length === 1; // a single team: closeness judged by distance instead of against rivals
     keys.forEach((k) => {
       const g = gm[k]; const i = info[k];
       if (!i) { points[k] = 0; results[k] = { none: true, points: 0, reason: 'No pin was placed before time ran out.' }; return; }
       let p; let reason;
       if (i.correct) { p = 3; reason = g.code ? 'Pin is inside the correct country!' : 'Pin in the sea within 50 km of the answer — counts as correct.'; }
+      else if (solo) { p = i.km <= A.SOLO_NEAR_KM ? 2 : 1; reason = p === 2 ? 'Incorrect, but within 1,000 km of the answer.' : 'Incorrect and more than 1,000 km from the answer.'; }
       else if (anyCorrect) { p = 1; reason = 'Incorrect — another team found the correct country.'; }
       else if (i.km === minKm) { p = 2; reason = wrong.length === 1 ? 'Incorrect, but the only submitted guess — it counts as the closest.' : tiedClosest > 1 ? 'Incorrect — tied for the closest guess.' : 'Incorrect, but the closest guess.'; }
       else { p = 1; reason = 'Incorrect and further away than the closest guess.'; }
@@ -713,6 +767,12 @@
       return loose.length ? `<section class="lteam lteam-none"><header><h3>Not in a team</h3></header><ul class="mlist">${loose.map((u) => `<li class="member"><span class="dot ${H.players[u].online ? 'on' : 'off'}"></span><span class="mname">${esc(H.players[u].name)}</span><span class="mactions"><label class="visually-hidden" for="dmv-${u}">Move</label><select id="dmv-${u}" data-act="move" data-uid="${u}"><option value="">Add to team…</option>${keysOf(H.teams).map((x) => `<option value="${x}">${esc(H.teams[x].name)}</option>`).join('')}</select></span></li>`).join('')}</ul></section>` : '';
     })();
     body.className = 'lobby-teams';
+    body.insertAdjacentHTML('beforeend', `<div class="lobby-actions dlg-team-actions"><button type="button" class="btn btn-secondary btn-small" data-act="addteam"${keysOf(H.teams).length >= MAX_TEAMS ? ' disabled' : ''}>+ Add team</button><button type="button" class="btn btn-secondary btn-small" data-act="playhere">Play on this device too</button></div><p class="help">New teams join from the next round. Removing a team moves its players to “Not in a team” and removes its points.</p>`);
+    // Remove-team buttons on each team card (keep at least one team)
+    if (keysOf(H.teams).length > 1) body.querySelectorAll('.lteam:not(.lteam-none) header').forEach((hd, i) => {
+      const k = keysOf(H.teams)[i];
+      hd.insertAdjacentHTML('beforeend', `<button type="button" class="btn btn-ghost btn-tiny tool-danger" data-act="rmteam" data-team="${k}">Remove team</button>`);
+    });
   }
 
   /* session clock & time-up */
@@ -757,6 +817,7 @@
     const top = Math.max(...ks.map((k) => H.teams[k].score || 0));
     const tied = ks.filter((k) => (H.teams[k].score || 0) === top);
     const n = H.history.length;
+    if (ks.length === 1) { endGame({ winners: ks, method: 'solo', note: `Single-team game: ${top} points from ${n} completed round${n === 1 ? '' : 's'}, out of a possible ${n * 3}${early ? ' (game ended early)' : ''}.` }); return; }
     if (tied.length === 1) { endGame({ winners: tied, method: 'score', note: `Decided on total score from ${n} completed round${n === 1 ? '' : 's'}${early ? ' (game ended early)' : ''}.` }); return; }
     const canTB = DATA.TIEBREAKERS.some((q) => !H.tbUsed.includes(q.id));
     if (!H.s.tiebreaker || !canTB) { endGame({ winners: tied, method: 'draw', note: `${tied.map((k) => H.teams[k].name).join(' and ')} are level on ${top} points, so the game is a draw.` }); return; }
@@ -1087,7 +1148,9 @@
   function renderEnd(st, isHost) {
     const f = st.final; if (!f) return;
     const names = f.winners.map((k) => st.teams[k] ? st.teams[k].name : k);
-    const title = f.winners.length === 1 ? `${names[0]} win!` : (f.method === 'draw' ? 'It’s a draw!' : `Joint winners: ${names.join(' & ')}!`);
+    const soloGame = f.method === 'solo';
+    const maxPts = (st.history || []).length * 3;
+    const title = soloGame ? `Journey complete, ${names[0]}!` : f.winners.length === 1 ? `${names[0]} win!` : (f.method === 'draw' ? 'It’s a draw!' : `Joint winners: ${names.join(' & ')}!`);
     // Winners are always placed 1st (a Sudden Death winner ranks above the team it tied with); others rank by score.
     const ordered = f.ranking.filter((r) => f.winners.includes(r.key)).concat(f.ranking.filter((r) => !f.winners.includes(r.key)));
     let place = 0; let prev = null;
@@ -1110,9 +1173,9 @@
     $('#online-end').innerHTML = `
       <p class="eyebrow">Final destination</p>
       <h2 id="oe-title" class="winner-title" tabindex="-1">${esc(title)}</h2>
-      <p class="champion-msg">${mine ? 'That’s your team — congratulations!' : esc(A.pick(A.CHAMPION_LINES))}</p>
+      <p class="champion-msg">${soloGame ? `${f.ranking[0].score} out of ${maxPts} possible points.` : mine ? 'That’s your team — congratulations!' : esc(A.pick(A.CHAMPION_LINES))}</p>
       <div class="table-scroll"><table class="rank-table"><thead><tr><th>Place</th><th>Team</th><th class="num">Points</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="method-note">How the winner was determined: ${esc(f.note)}</p>
+      <p class="method-note">${soloGame ? '' : 'How the winner was determined: '}${esc(f.note)}</p>
       <h3 class="journey-title">Your World Journey</h3>
       <div class="journey-grid">${items.map(([h, p]) => `<div class="journey-item"><h4>${esc(h)}</h4><p>${esc(p)}</p></div>`).join('')}</div>
       <div class="end-actions">${isHost

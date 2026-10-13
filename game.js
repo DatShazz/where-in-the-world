@@ -94,6 +94,7 @@
   const TURN_SECONDS = 60;
   const SEA_TOLERANCE_KM = 50;   // pin in open water this close to the answer marker counts as correct
   const COAST_SNAP_KM = 25;      // pin in water this close to a coastline is assigned to that country
+  const SOLO_NEAR_KM = 1000;     // solo / single-team play: an incorrect pin this close scores 2 instead of 1
 
   /* =================================================================
    * 3. AUDIO ENGINE — every sound is synthesised here (original work).
@@ -609,6 +610,7 @@
   };
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let teams = ['', ''];
+  let solo = false; // one-screen solo play (a single team, no rival)
   let game = null;
   const ui = { reducedMotion: false, keepTimerInSettings: false, screen: 'intro', mode: 'local' }; // mode: 'local' (one screen) | 'online' (hosted rooms)
 
@@ -836,15 +838,23 @@
   function prepareTeamsScreen() {
     $('#team1-name').value = teams[0] || ''; $('#team2-name').value = teams[1] || '';
     $('#team1-error').textContent = ''; $('#team2-error').textContent = '';
+    $('#solo-toggle').checked = solo;
+    applySoloUI();
+  }
+  function applySoloUI() {
+    $('.team-input.team-2').hidden = solo;
+    $('label[for="team1-name"]').firstChild.textContent = solo ? 'Your name or team name ' : 'Team 1 name ';
+    $('#btn-choose-names').textContent = solo ? 'Choose a Name for Me' : 'Choose Names for Us';
   }
   function bindTeams() {
     let lastType = 0;
     ['#team1-name', '#team2-name'].forEach((sel) => $(sel).addEventListener('input', () => {
       const now = performance.now(); if (now - lastType > 60) { Sound.play('type'); lastType = now; }
     }));
+    $('#solo-toggle').addEventListener('change', (e) => { solo = e.target.checked; applySoloUI(); $('#team2-error').textContent = ''; Sound.play('click'); });
     $('#btn-choose-names').addEventListener('click', () => {
-      const n = randomNames(); $('#team1-name').value = n[0]; $('#team2-name').value = n[1];
-      Sound.play('shuffle'); announce(`Team names: ${n[0]} and ${n[1]}. You can edit them.`);
+      const n = randomNames(); $('#team1-name').value = n[0]; if (!solo) $('#team2-name').value = n[1];
+      Sound.play('shuffle'); announce(solo ? `Name: ${n[0]}. You can edit it.` : `Team names: ${n[0]} and ${n[1]}. You can edit them.`);
     });
     [[1, '#team1-name', '#team2-name'], [2, '#team2-name', '#team1-name']].forEach(([i, mine, other]) => {
       $(`#team${i}-reroll`).addEventListener('click', () => {
@@ -854,7 +864,16 @@
     });
     $('#teams-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const a = $('#team1-name').value.trim().replace(/\s+/g, ' '); const b = $('#team2-name').value.trim().replace(/\s+/g, ' ');
+      const a = $('#team1-name').value.trim().replace(/\s+/g, ' ');
+      if (solo) {
+        $('#team1-error').textContent = a ? '' : 'Please enter a name (or use Choose a Name for Me).';
+        if (!a) { $('#team1-name').focus(); return; }
+        teams = [a, ''];
+        Sound.play('confirm', { major: true });
+        buildStartScreen(); goTo('start');
+        return;
+      }
+      const b = $('#team2-name').value.trim().replace(/\s+/g, ' ');
       $('#team1-error').textContent = a ? '' : 'Please enter a name for Team 1 (or use Choose Names for Us).';
       $('#team2-error').textContent = b ? '' : 'Please enter a name for Team 2 (or use Choose Names for Us).';
       if (a && b && a.toLowerCase() === b.toLowerCase()) $('#team2-error').textContent = 'Each team needs a different name.';
@@ -868,7 +887,9 @@
 
   /* ---------- Starting page ---------- */
   function buildStartScreen() {
-    $('#start-versus').innerHTML = `<div class="vs-name vs-1">● ${esc(teamName(0))}</div><div class="vs">VS</div><div class="vs-name vs-2">◆ ${esc(teamName(1))}</div>`;
+    $('#start-versus').innerHTML = solo
+      ? `<div class="vs-name vs-1">● ${esc(teamName(0))}</div><div class="vs">SOLO</div><div class="vs-name vs-2">Aim for ${settings.rounds * 3} points</div>`
+      : `<div class="vs-name vs-1">● ${esc(teamName(0))}</div><div class="vs">VS</div><div class="vs-name vs-2">◆ ${esc(teamName(1))}</div>`;
     const diffLabel = { mixed: 'Mixed Challenge', hard: 'Hard', expert: 'Expert Explorer' }[settings.difficulty];
     const catLabel = settings.category === 'all' ? 'All Categories' : settings.category === 'mystery' ? 'Mystery Mix (hidden until reveal)' : settings.category;
     const modeLabel = { professional: 'Professional', fun: 'Fun', chaotic: 'Chaotic', custom: 'Custom' }[Sound.prefs.mode];
@@ -995,8 +1016,9 @@
     game = {
       plannedRounds: settings.rounds, sessionSec: minutesSelected() * 60, sessionStart: Date.now(),
       roundNo: 1, rounds: [], usedIds: new Set(), sequence: [], current: null, finishAfterRound: false,
-      timeUpHandled: false, warned: {}, tb: null, ended: false, outcome: null, revealToken: 0,
+      timeUpHandled: false, warned: {}, tb: null, ended: false, outcome: null, revealToken: 0, solo,
     };
+    $('#sb-team-2').hidden = solo;
     // Do not warn about thresholds longer than the session itself
     [300, 120, 60].forEach((th) => { if (game.sessionSec <= th + 30) game.warned[th] = true; });
     $('#sb-name-1').textContent = teamName(0); $('#sb-name-1').title = teamName(0);
@@ -1010,7 +1032,9 @@
   function makeRound(q, tiebreak) {
     const first = settings.alternate && !tiebreak && game.roundNo % 2 === 0 ? 1 : 0;
     return {
-      no: game.roundNo, q, tiebreak: !!tiebreak, order: [first, 1 - first], status: ['pending', 'pending'],
+      no: game.roundNo, q, tiebreak: !!tiebreak,
+      order: game.solo ? [0] : [first, 1 - first],
+      status: game.solo ? ['pending', 'done'] : ['pending', 'pending'],
       active: null, phase: 'handover', guesses: [null, null], conf: [null, null], hintsShown: 0, result: null, scored: false,
     };
   }
@@ -1113,7 +1137,7 @@
     Timer.idle();
     MapView.setPins([]); // never show any guess between turns
     const other = 1 - team;
-    const otherDone = r.status[other] === 'done';
+    const otherDone = !game.solo && r.status[other] === 'done';
     $('#handover-badge').className = 'team-badge team-badge-' + (team + 1); $('#handover-badge').textContent = team + 1;
     $('#handover-title').textContent = (r.tiebreak ? 'Sudden Death: ' : '') + teamName(team);
     $('#handover-text').textContent = (r.tiebreak ? 'One secret guess — closest pin wins. ' : 'Your turn! ') +
@@ -1305,7 +1329,7 @@
     const v = await confirmDialog({
       title: 'Reset a team’s guess',
       body: '<p>Which team’s guess should be cleared? A team that has already locked in will retake its turn.</p>',
-      buttons: [{ label: teamName(0), value: '0', cls: 'btn-secondary' }, { label: teamName(1), value: '1', cls: 'btn-secondary' }, { label: 'Cancel', value: 'no', cls: 'btn-ghost' }],
+      buttons: [{ label: teamName(0), value: '0', cls: 'btn-secondary' }].concat(game.solo ? [] : [{ label: teamName(1), value: '1', cls: 'btn-secondary' }]).concat([{ label: 'Cancel', value: 'no', cls: 'btn-ghost' }]),
       pauseTimer: true,
     });
     if (v !== '0' && v !== '1') return;
@@ -1368,7 +1392,7 @@
    * 10. SCORING & ANSWER REVEAL
    * ================================================================= */
   /** Pure scoring function — awards points exactly once per round (the caller records it once). */
-  function scoreRound(q, guesses) {
+  function scoreRound(q, guesses, soloMode) {
     const ans = [q.correctLatitude, q.correctLongitude];
     const info = guesses.map((g) => {
       if (!g) return null;
@@ -1379,6 +1403,15 @@
     });
     const points = [0, 0]; const reasons = ['', ''];
     const valid = info.filter(Boolean).length;
+    if (soloMode) {
+      // Solo / single-team scoring: no rival to compare against, so closeness is judged by distance.
+      const me = info[0];
+      if (!me) { points[0] = 0; reasons[0] = 'No pin was locked in, so no points this round.'; }
+      else if (me.correct) { points[0] = 3; reasons[0] = me.seaHit ? 'Pin in the sea within 50 km of the answer — counts as the correct location.' : `Pin is inside ${q.correctCountry.split(' (')[0]} — the correct country!`; }
+      else if (me.km <= SOLO_NEAR_KM) { points[0] = 2; reasons[0] = 'Incorrect, but within 1,000 km of the answer.'; }
+      else { points[0] = 1; reasons[0] = 'Incorrect and more than 1,000 km from the answer.'; }
+      return { info, points, reasons, noneSubmitted: !me };
+    }
     for (let t = 0; t < 2; t++) {
       const me = info[t]; const other = info[1 - t];
       if (!me) { points[t] = 0; reasons[t] = valid ? 'No guess was locked in, so no points this round.' : 'Neither team submitted a guess.'; continue; }
@@ -1401,7 +1434,7 @@
     Sound.stopClue();
     if (r.tiebreak) { revealTiebreak(); return; }
     if (!r.scored) {
-      r.result = scoreRound(r.q, r.guesses);
+      r.result = scoreRound(r.q, r.guesses, game.solo);
       r.scored = true; // guard: points are recorded once, and removed by Reset Current Round
       game.rounds.push({ no: r.no, q: r.q, guesses: r.guesses.map((g) => g && Object.assign({}, g)), conf: r.conf.slice(), result: r.result });
       History.add(r.q.id);
@@ -1409,7 +1442,7 @@
     renderRevealCommon();
     const res = r.result;
     // result cards
-    $('#result-cards').innerHTML = [0, 1].map((t) => resultCard(t, res.points[t], res.info[t], res.reasons[t], r.conf[t])).join('') +
+    $('#result-cards').innerHTML = (game.solo ? [0] : [0, 1]).map((t) => resultCard(t, res.points[t], res.info[t], res.reasons[t], r.conf[t])).join('') +
       (res.noneSubmitted ? '<div class="result-card"><p class="rc-detail"><strong>No guesses this round.</strong> You can replay it with the same question, or continue.</p><button type="button" class="btn btn-secondary btn-small" id="btn-replay">Replay this round</button></div>' : '');
     const replay = $('#btn-replay'); if (replay) replay.addEventListener('click', resetRound);
     updateNextButton();
@@ -1492,6 +1525,7 @@
     const r = game.current;
     if (r && !r.scored && !r.tiebreak) { /* unfinished round is discarded and never counted */ }
     const t = totals();
+    if (game.solo) { const n = game.rounds.length; endScreen({ winner: 0, method: 'solo', note: `Solo game: ${t[0]} points from ${n} completed round${n === 1 ? '' : 's'}, out of a possible ${n * 3}${early ? ' (game ended early)' : ''}.` }); return; }
     if (t[0] !== t[1]) { endScreen({ winner: t[0] > t[1] ? 0 : 1, method: 'score', note: `Decided on total score from ${game.rounds.length} completed round${game.rounds.length === 1 ? '' : 's'}: ${t[0]} to ${t[1]}${early ? ' (game ended early)' : ''}.` }); return; }
     const canTB = DATA.TIEBREAKERS.length > 0 && (!game.tb || DATA.TIEBREAKERS.some((q) => !game.tb.used.has(q.id)));
     if (!settings.tiebreaker || !canTB) { endScreen({ winner: null, method: 'draw', note: `Scores are level at ${t[0]}–${t[1]}${settings.tiebreaker ? '' : ' and the tie-breaker is switched off'}, so the game is a draw.` }); return; }
@@ -1586,10 +1620,18 @@
     $('#map-overlay').hidden = true;
     const t = totals();
     const w = outcome.winner;
-    $('#end-title').textContent = w == null ? (outcome.method === 'joint' ? `Joint winners: ${teamName(0)} & ${teamName(1)}!` : 'It’s a draw!') : `${teamName(w)} win!`;
-    $('#champion-msg').textContent = w == null ? 'Shared glory — both teams travelled brilliantly together.' : pick(CHAMPION_LINES);
-    $('#final-scores').innerHTML = [0, 1].map((i) => `<div class="final-score t${i + 1}${w === i || (w == null && outcome.method === 'joint') ? ' win' : ''}"><div class="fs-name">${i === 0 ? '●' : '◆'} ${esc(teamName(i))}</div><div class="fs-pts">${t[i]}</div><div>points</div></div>`).join('');
-    $('#method-note').textContent = 'How the winner was determined: ' + outcome.note;
+    if (game.solo) {
+      const max = game.rounds.length * 3; const pct = max ? t[0] / max : 0;
+      $('#end-title').textContent = `Journey complete, ${teamName(0)}!`;
+      $('#champion-msg').textContent = pct >= 0.8 ? 'Master navigator — you know your world!' : pct >= 0.5 ? 'A well-travelled explorer — great instincts!' : 'Every round was a new discovery — that’s what the journey is for!';
+      $('#final-scores').innerHTML = `<div class="final-score t1 win"><div class="fs-name">● ${esc(teamName(0))}</div><div class="fs-pts">${t[0]}</div><div>out of ${max} possible points</div></div>`;
+      $('#method-note').textContent = outcome.note;
+    } else {
+      $('#end-title').textContent = w == null ? (outcome.method === 'joint' ? `Joint winners: ${teamName(0)} & ${teamName(1)}!` : 'It’s a draw!') : `${teamName(w)} win!`;
+      $('#champion-msg').textContent = w == null ? 'Shared glory — both teams travelled brilliantly together.' : pick(CHAMPION_LINES);
+      $('#final-scores').innerHTML = [0, 1].map((i) => `<div class="final-score t${i + 1}${w === i || (w == null && outcome.method === 'joint') ? ' win' : ''}"><div class="fs-name">${i === 0 ? '●' : '◆'} ${esc(teamName(i))}</div><div class="fs-pts">${t[i]}</div><div>points</div></div>`).join('');
+      $('#method-note').textContent = 'How the winner was determined: ' + outcome.note;
+    }
     renderJourney(outcome);
     goTo('end');
     Sound.play('confettiPop');
@@ -1608,7 +1650,7 @@
     items.push(['Continents represented', continents.length ? `${continents.length}: ${continents.join(', ')}` : '—']);
     const correct = [0, 0];
     rounds.forEach((r) => r.result.info.forEach((i, t) => { if (i && i.correct) correct[t]++; }));
-    items.push(['Correct-country guesses', `${teamName(0)}: ${correct[0]} · ${teamName(1)}: ${correct[1]}`]);
+    items.push(['Correct-country guesses', game.solo ? `${correct[0]} of ${rounds.length}` : `${teamName(0)}: ${correct[0]} · ${teamName(1)}: ${correct[1]}`]);
     let closest = null;
     rounds.forEach((r) => r.result.info.forEach((i, t) => { if (i && (!closest || i.km < closest.km)) closest = { km: i.km, t, q: r.q }; }));
     items.push(['Closest guess of the game', closest ? `${teamName(closest.t)} — ${fmtKm(closest.km)} from ${closest.q.answerName}` : '—']);
@@ -1624,7 +1666,10 @@
     const mc = best(true); const mi = best(false);
     items.push(['Most confident correct answer', mc && mc.rank ? `${teamName(mc.t)} — ${mc.conf} about ${mc.r.q.answerName}, and right!` : mc ? `${teamName(mc.t)} found ${mc.r.q.answerName}` : 'No correct countries this time — plenty of new discoveries!']);
     items.push(['Most confident incorrect answer', mi && mi.rank >= 3 ? `${teamName(mi.t)} — ${mi.conf} on ${mi.r.q.answerName} (it was ${mi.r.q.correctCountry.split(' (')[0]})` : 'No overconfident misses — well judged!']);
-    if (outcome.winner != null && rounds.length) {
+    if (game.solo) {
+      const near = rounds.filter((r) => r.result.info[0] && !r.result.info[0].correct && r.result.info[0].km <= SOLO_NEAR_KM).length;
+      items.push(['Near misses (within 1,000 km)', String(near)]);
+    } else if (outcome.winner != null && rounds.length) {
       let run = [0, 0]; let deficit = 0; const w = outcome.winner;
       rounds.forEach((r) => { run = [run[0] + r.result.points[0], run[1] + r.result.points[1]]; deficit = Math.max(deficit, run[1 - w] - run[w]); });
       items.push(['Biggest comeback', deficit > 0 ? `${teamName(w)} came back from ${deficit} point${deficit === 1 ? '' : 's'} behind!` : `${teamName(w)} were never behind after a completed round.`]);
@@ -1632,9 +1677,12 @@
     let surprise = null;
     rounds.forEach((r) => { const ks = r.result.info.filter(Boolean).map((i) => i.km); if (!ks.length) return; const avg = ks.reduce((a, b) => a + b, 0) / ks.length; if (!surprise || avg > surprise.avg) surprise = { avg, r }; });
     items.push(['Most surprising Cultural Spotlight', surprise && surprise.avg > 0 ? `${surprise.r.q.answerName} (${surprise.r.q.correctCountry.split(' (')[0]}) — guesses averaged ${fmtKm(surprise.avg)} away` : '—']);
-    items.push(['Winning team', outcome.winner == null ? (outcome.method === 'joint' ? 'Joint winners' : 'Draw') : teamName(outcome.winner)]);
     const t = totals();
-    items.push(['Final scores', `${teamName(0)} ${t[0]} – ${t[1]} ${teamName(1)}`]);
+    if (game.solo) items.push(['Final score', `${t[0]} out of ${rounds.length * 3}`]);
+    else {
+      items.push(['Winning team', outcome.winner == null ? (outcome.method === 'joint' ? 'Joint winners' : 'Draw') : teamName(outcome.winner)]);
+      items.push(['Final scores', `${teamName(0)} ${t[0]} – ${t[1]} ${teamName(1)}`]);
+    }
     $('#journey-grid').innerHTML = items.map(([h, p]) => `<div class="journey-item"><h4>${esc(h)}</h4><p>${esc(p)}</p></div>`).join('');
   }
 
@@ -1662,7 +1710,8 @@
   function restartEverything() {
     Timer.kill(); Session.stop(); Sound.stopAll();
     MapView.clearReveal(); MapView.resetView();
-    game = null; teams = ['', ''];
+    game = null; teams = ['', '']; solo = false;
+    $('#solo-toggle').checked = false; $('#sb-team-2').hidden = false;
     settings = Object.assign({}, DEFAULT_SETTINGS);
     $('#team1-name').value = ''; $('#team2-name').value = '';
     $('#sb-score-1').textContent = '0'; $('#sb-score-2').textContent = '0';
@@ -1943,7 +1992,7 @@
       DATA, Sound, Geo, esc, fmtKm, fmtClock, toast, announce, confirmDialog, openDialog, goTo, setMode,
       pickQuestion, pickTiebreaker, History, shuffle, pick, rand, clamp, confetti, stopConfetti,
       getSettings: () => settings, minutesSelected, TEAM_NAMES, CHAMPION_LINES, CAT_ICON, CONFIDENCE_RANK,
-      SEA_TOLERANCE_KM, COAST_SNAP_KM, TURN_SECONDS, ui, settingsToForm, isLocalGameActive: () => !!(game && !game.ended),
+      SEA_TOLERANCE_KM, COAST_SNAP_KM, SOLO_NEAR_KM, TURN_SECONDS, ui, settingsToForm, isLocalGameActive: () => !!(game && !game.ended),
     };
 
     if (!DATA.MAIN.length) toast('Question bank failed to load — check that questions.js is present.', 'warn');

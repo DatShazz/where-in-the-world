@@ -41,11 +41,16 @@ Live at **https://datshazz.github.io/where-in-the-world/**.
 
 **Host (facilitator)**
 1. Open the game, then click **Host an online game**.
-2. Choose the session length and options, and set **Number of teams (2–6)**.
+2. Choose the session length and options, and set **Teams to start with (1–6)**.
 3. Continue past the rules. You'll get a 4-letter room code and a join link to share in your meeting chat.
-4. In the lobby you can rename teams, move or remove players, **Shuffle players into teams**, appoint a leader, or use **Let fate pick missing leaders**.
-5. Click **Start Game** once every team with players has a leader. Empty teams are removed automatically.
-6. Screen-share the host screen. It shows the clue, the timer, each team's status (*Thinking…*, *Pin placed…*, *Locked ✓*) and the reveal.
+4. In the lobby you can:
+   - **+ Add team** or **Remove team**. A removed team's players move to "Not in a team".
+   - Rename teams, and move or remove players.
+   - **Shuffle players into teams**, appoint a leader, or use **Let fate pick missing leaders**.
+   - **Play on this device too**, which opens your own player screen in a new tab, so you can play solo or join a team yourself.
+5. Click **Start Game** once at least one team has a player and every team with players has a leader. Empty teams are removed automatically.
+6. Mid-game, **Teams & Players** on the toolbar lets you add or remove teams, move players and appoint leaders. New teams join from the next round; a removed team's points are removed.
+7. Screen-share the host screen. It shows the clue, the timer, each team's status (*Thinking…*, *Pin placed…*, *Locked ✓*) and the reveal.
 
 **Players**
 1. Open the join link, or the website, then **Join a game**. Enter the code and a name.
@@ -64,10 +69,13 @@ Live at **https://datshazz.github.io/where-in-the-world/**.
   - Otherwise the closest guess scores 2 (ties share it) and the others score 1.
   - No pin scores 0.
   - With two teams this matches the House Rules exactly.
+  - **One team (solo):** 3 for the correct country, 2 within 1,000 km of the answer, 1 further away. The final score is shown out of the maximum possible.
 - **When the timer ends,** a leader's placed pin is locked automatically.
 - **A tie for first** sends only the tied teams to Expert Sudden Death, with the same tie-break chain as the one-screen game.
 - **If the host's page reloads,** use **Resume hosting room XXXX** on the start screen. Players who reload rejoin automatically.
 - **Closing the room** deletes it from the database. Players are told the game has ended.
+
+**Solo on one screen (offline):** press **Play**, and on the Teams screen tick **Play solo**. One person or one group plays every round with the same solo scoring.
 
 **Behind the scenes:** online play uses a free Google Firebase project (`where-in-the-world-44d5d`) for live syncing:
 - **Realtime Database in Singapore:** carries the game between devices.

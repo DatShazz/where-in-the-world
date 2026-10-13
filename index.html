@@ -65,7 +65,7 @@
         <p class="lede">Inspect the clue, share what you know and plant your team’s pin on the map. You may recognise it from home, travel, family, food, music or pure brilliant deduction.</p>
         <div class="intro-actions">
           <button type="button" class="btn btn-hero" id="btn-play"><svg><use href="#i-pin"/></svg>Play</button>
-          <p class="mode-note">One shared screen, two teams, works offline.</p>
+          <p class="mode-note">One shared screen, solo or two teams, works offline.</p>
         </div>
         <div class="online-entry" aria-labelledby="online-entry-title">
           <h2 id="online-entry-title" class="online-entry-title">Play online — everyone on their own device</h2>
@@ -128,10 +128,10 @@
           <fieldset class="field-group" data-online-only hidden>
             <legend>Online teams</legend>
             <div class="stepper">
-              <label for="online-teams">Number of teams (2–6)</label>
-              <input type="number" id="online-teams" min="2" max="6" step="1" value="3" inputmode="numeric">
+              <label for="online-teams">Teams to start with (1–6)</label>
+              <input type="number" id="online-teams" min="1" max="6" step="1" value="3" inputmode="numeric">
             </div>
-            <p class="help">Players join from their own devices and choose a team in the lobby. Empty teams are removed when the game starts.</p>
+            <p class="help">You can add or remove teams in the lobby at any time. Players join from their own devices and choose a team; empty teams are removed when the game starts. One team on its own plays solo scoring.</p>
           </fieldset>
 
           <div class="two-col">
@@ -212,6 +212,7 @@
               <li>If one team finds the correct country, the other team’s incorrect guess scores 1.</li>
               <li>If only one team submits, it is scored normally (a lone incorrect guess counts as the closer guess) and the other team scores 0.</li>
               <li>If neither team submits, both score 0 and the facilitator can replay or continue.</li>
+              <li><strong>Solo or single-team play:</strong> 3 for the correct country, 2 if the pin is within 1,000 km of the answer, 1 if further, 0 for no pin. Your final score is shown out of the maximum possible.</li>
               <li>If time runs out while a pin is placed but not locked, that pin is locked automatically.</li>
               <li>Distances are measured to the answer marker. A pin in the sea within 50 km of the answer, or within 25 km of the correct coastline, counts as the correct country.</li>
             </ul>
@@ -220,7 +221,8 @@
         <div class="online-rules" data-online-only hidden>
           <h3>Online play</h3>
           <ul>
-            <li>2 to 6 teams. Every player joins on their own device with the room code.</li>
+            <li>1 to 6 teams. Every player joins on their own device with the room code. The facilitator can add or remove teams in the lobby and during the game.</li>
+            <li>Playing alone? Host the game, then use <strong>Play on this device too</strong> to open your own player screen. A single team uses solo scoring: 3 for the correct country, 2 within 1,000 km, 1 further away.</li>
             <li>Each team chooses a <strong>team leader</strong>: a unanimous vote, a volunteer (unless a teammate objects), or “let fate decide”.</li>
             <li>All teams guess <strong>at the same time</strong> during the 60 seconds. Teammates drop suggestion pins that only their own team can see; only the leader places and locks the official pin.</li>
             <li>Scoring with more than two teams: <strong>3</strong> for the correct country; if no team is correct, the closest guess scores <strong>2</strong> (ties share it) and the others <strong>1</strong>; if any team is correct, incorrect guesses score <strong>1</strong>; no pin scores <strong>0</strong>.</li>
@@ -240,6 +242,7 @@
       <div class="panel">
         <h2 id="teams-title" class="screen-title">Meet the Teams</h2>
         <form id="teams-form" novalidate>
+          <label class="toggle solo-toggle"><input type="checkbox" id="solo-toggle"><span><strong>Play solo</strong> — one person or one group, no rival team</span></label>
           <div class="team-inputs">
             <div class="team-input team-1">
               <span class="team-badge team-badge-1" aria-hidden="true">1</span>
