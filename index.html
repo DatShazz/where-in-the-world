@@ -349,15 +349,6 @@
                 <button type="button" role="radio" aria-checked="false" data-conf="Total Guess">Total Guess</button>
               </div>
             </div>
-            <div class="country-picker" id="country-picker">
-              <label for="country-search">Keyboard / list alternative: choose a country</label>
-              <div class="input-row">
-                <input type="text" id="country-search" list="country-list" autocomplete="off" placeholder="Start typing a country…">
-                <button type="button" class="btn btn-ghost btn-small" id="btn-place-country">Place pin</button>
-              </div>
-              <datalist id="country-list"></datalist>
-              <p class="field-error" id="country-error" role="alert"></p>
-            </div>
             <div class="pin-status" id="pin-status" aria-live="polite"></div>
             <button type="button" class="btn btn-primary btn-lock" id="btn-lock">Lock In Guess</button>
           </div>
@@ -378,7 +369,7 @@
         <!-- Map -->
         <div class="map-area">
           <div class="map-wrap">
-            <div id="map" class="map" tabindex="0" role="application" aria-label="World map. Click or tap to place your team’s pin. With the keyboard, use arrow keys to pan, plus and minus to zoom, then use Drop pin at map centre."></div>
+            <div id="map" class="map" tabindex="0" role="application" aria-label="World map. Click or tap to place your team’s pin; drag the pin to move it. Arrow keys pan and plus and minus zoom."></div>
             <div class="crosshair" aria-hidden="true"></div>
             <div class="map-overlay" id="map-overlay" hidden>
               <div class="handover-card" id="handover-card" role="dialog" aria-modal="false" aria-labelledby="handover-title">
@@ -391,7 +382,6 @@
             <div class="map-error" id="map-error" hidden></div>
           </div>
           <div class="map-tools">
-            <button type="button" class="btn btn-ghost btn-small" id="btn-drop-centre"><svg aria-hidden="true"><use href="#i-pin"/></svg>Drop pin at map centre</button>
             <button type="button" class="btn btn-ghost btn-small" id="btn-reset-view">Reset Map View</button>
             <span class="map-legend" aria-hidden="true"><span class="lg lg-1">● Team 1</span><span class="lg lg-2">◆ Team 2</span><span class="lg lg-c">★ Answer</span></span>
           </div>
@@ -602,8 +592,7 @@
       <h3>Keyboard</h3>
       <ul>
         <li>Tab through every control; Enter or Space activates buttons.</li>
-        <li>On the focused map: arrow keys pan, + and − zoom, then press “Drop pin at map centre”.</li>
-        <li>Or type a country name in the list box and press “Place pin”.</li>
+        <li>Answers are placed by clicking or tapping on the map (drag the pin to move it). On the focused map, arrow keys pan and + and − zoom.</li>
         <li>Shortcuts (when not typing): <kbd>L</kbd> lock in, <kbd>P</kbd> pause/resume, <kbd>M</kbd> mute.</li>
         <li>Optional soundboard shortcuts use <kbd>Shift</kbd> + number, so they never clash with map keys.</li>
       </ul>

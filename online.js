@@ -184,10 +184,6 @@
     const res = st.reveal.results || {};
     return Object.keys(res).filter((k) => !res[k].none).map((k) => ({ team: k, lat: res[k].lat, lng: res[k].lng, km: res[k].km, label: ((st.teams || {})[k] || {}).name || k }));
   }
-  function populateCountryList() {
-    const dl = $('#country-list');
-    if (dl && !dl.children.length) dl.innerHTML = Geo.index.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => `<option value="${esc(c.name)}"></option>`).join('');
-  }
   function locate(lat, lng, forced) {
     let c = forced || Geo.countryAt(lat, lng); let snapped = false;
     if (!c) { const n = Geo.nearestCountry(lat, lng, A.COAST_SNAP_KM); if (n) { c = n.country; snapped = true; } }
@@ -1073,7 +1069,6 @@
     ctr.innerHTML = `
       <div class="pl-timerline"><span class="pl-timer" id="pl-timer">—</span><span class="pl-role">${leader ? '⭐ You are the leader: place and lock your team’s pin.' : `Tap the map to suggest a spot to ${esc(ln)}.`}</span></div>
       ${locked ? `<p class="pl-locked">✓ ${esc(st.teams[P.team].name)} locked in: ${esc(g.name)}${g.conf ? ` (${esc(g.conf)})` : ''}. Waiting for the other teams…</p>` : ''}
-      ${!locked ? `<div class="country-picker"><label for="pl-country">Or choose a country</label><div class="input-row"><input type="text" id="pl-country" list="country-list" autocomplete="off" placeholder="Start typing…"><button type="button" class="btn btn-ghost btn-small" data-pact="country">${leader ? 'Place pin' : 'Suggest'}</button><button type="button" class="btn btn-ghost btn-small" data-pact="centre">Pin map centre</button></div></div>` : ''}
       ${leader && !locked ? `
         ${sugg.length ? `<div class="sugg"><p class="help">Team suggestions:</p>${sugg.map(([u, s]) => `<button type="button" class="btn btn-ghost btn-tiny" data-pact="use" data-uid="${u}">Use ${esc((P.players[u] || {}).name || s.by)}’s: ${esc(s.name)}</button>`).join(' ')}</div>` : ''}
         <p class="pin-status">${g ? `Team pin: <strong>${esc(g.name)}</strong>` : 'No team pin yet.'}</p>
@@ -1125,12 +1120,6 @@
         await Net.ref(P.code, 'players/' + Net.uid + '/team').set(el.dataset.team);
       } else if (act === 'vote') await leadRef().update({ vote: el.dataset.uid, team: P.team });
       else if (['claim', 'fate', 'object', 'stepdown'].includes(act)) { await leadReq(act); if (act === 'fate') toast('Spinning for a leader…'); }
-      else if (act === 'country') {
-        const c = Geo.findByName(($('#pl-country') || {}).value);
-        if (!c) { toast('Country not found — choose a name from the list.'); return; }
-        onPlayerMapClick(c.labelLat, c.labelLng, c);
-        if (playerMap) playerMap.m.panTo([c.labelLat, c.labelLng]);
-      } else if (act === 'centre') { if (playerMap) { const c = playerMap.centre(); onPlayerMapClick(c[0], c[1]); } }
       else if (act === 'use') { const s = P.suggest[el.dataset.uid]; if (s) onPlayerMapClick(s.lat, s.lng, s.code ? Geo.byCode.get(s.code) : null); }
       else if (act === 'conf') { if (P.guess) await Net.ref(P.code, 'guesses/' + P.team).update({ conf: el.dataset.conf }); }
       else if (act === 'lock') {
@@ -1237,10 +1226,8 @@
     $('#host-lobby').addEventListener('click', hostLobbyAction);
     $('#host-lobby').addEventListener('change', hostLobbyAction);
     $('#screen-player').addEventListener('click', (e) => { if (e.target.id === 'pl-leave') { confirmDialog({ title: 'Leave this game?', body: '<p>You can rejoin later with the same code.</p>', buttons: [{ label: 'Leave', value: 'yes', cls: 'btn-primary' }, { label: 'Stay', value: 'no', cls: 'btn-ghost' }], pauseTimer: false }).then((v) => { if (v === 'yes') leaveGame(); }); return; } playerAction(e); });
-    $('#screen-player').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'pl-country') { e.preventDefault(); playerAction({ target: $('[data-pact="country"]') }); } });
     $('#online-end').addEventListener('click', endAction);
     bindHostTools();
-    populateCountryList();
     window.addEventListener('resize', () => { if (hostMap) hostMap.invalidate(); if (playerMap) playerMap.invalidate(); });
 
     // Deep links and resuming after a page reload

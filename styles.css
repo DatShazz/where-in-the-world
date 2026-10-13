@@ -314,7 +314,16 @@ legend { font-weight: 800; font-size: 1.05rem; color: var(--navy); padding: 0 4p
 .audio-clue .ac-label { font-weight: 800; color: var(--teal); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
 .audio-clue p { margin: 4px 0 8px; }
 .audio-clue .help { margin: 4px 0 0; }
-.clue-text { font-size: 1.12rem; font-weight: 600; margin: 0 0 12px; }
+/* The question: its own high-contrast box so it stands out from images and hints */
+.clue-text {
+  position: relative; margin: 4px 0 14px; padding: 30px 16px 16px;
+  background: var(--navy); color: #fff; border-radius: 14px; border: 3px solid var(--sun);
+  box-shadow: 0 4px 0 #c48a00; font-size: 1.22rem; font-weight: 700; line-height: 1.4; text-wrap: pretty;
+}
+.clue-text::before {
+  content: "THE QUESTION"; position: absolute; top: 8px; left: 16px;
+  font-size: .72rem; font-weight: 900; letter-spacing: 1.5px; color: var(--sun);
+}
 .hints { margin: 0 0 12px; }
 .hint-list { margin: 0 0 6px; padding-left: 1.3em; }
 .hint-list li { background: #fff7e0; border-radius: 8px; padding: 4px 8px; margin-bottom: 4px; }

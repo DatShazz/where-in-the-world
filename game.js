@@ -1115,10 +1115,6 @@
     renderHints();
     // confidence
     $('#confidence-box').hidden = !settings.confidence || r.tiebreak;
-    // country list
-    const dl = $('#country-list');
-    if (!dl.children.length) dl.innerHTML = Geo.index.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => `<option value="${esc(c.name)}"></option>`).join('');
-    $('#country-search').value = ''; $('#country-error').textContent = '';
   }
 
   function renderHints() {
@@ -1171,7 +1167,6 @@
     const inTurn = r.phase === 'turn';
     const g = r.guesses[t];
     $$('#confidence-options button').forEach((b) => { b.disabled = !inTurn; b.setAttribute('aria-checked', String(r.conf[t] === b.dataset.conf)); });
-    $('#country-search').disabled = !inTurn; $('#btn-place-country').disabled = !inTurn; $('#btn-drop-centre').disabled = !inTurn;
     const lock = $('#btn-lock'); lock.disabled = !inTurn || !g;
     lock.textContent = inTurn ? `Lock In ${teamName(t).length > 22 ? 'Guess' : teamName(t) + '’s Guess'}` : 'Lock In Guess';
     const ps = $('#pin-status');
@@ -1272,16 +1267,7 @@
       if (['ArrowRight', 'ArrowDown'].includes(e.key)) { e.preventDefault(); btns[(i + 1) % btns.length].focus(); }
       if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); btns[(i - 1 + btns.length) % btns.length].focus(); }
     });
-    const placeFromList = () => {
-      const c = Geo.findByName($('#country-search').value);
-      if (!c) { $('#country-error').textContent = 'Country not found — choose a name from the list.'; return; }
-      $('#country-error').textContent = '';
-      placePin(c.labelLat, c.labelLng, c);
-      MapView.panTo(c.labelLat, c.labelLng);
-    };
-    $('#btn-place-country').addEventListener('click', placeFromList);
-    $('#country-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); placeFromList(); } });
-    $('#btn-drop-centre').addEventListener('click', () => { const c = MapView.centre(); if (c) placePin(c[0], c[1]); });
+    // Answers are placed only by clicking/tapping the map (or dragging the pin) — no typing.
     $('#btn-reset-view').addEventListener('click', () => { MapView.resetView(); Sound.play('click'); });
 
     $('#t-pause').addEventListener('click', () => { Timer.pause('manual'); announce('Timer paused.'); });

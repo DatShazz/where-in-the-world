@@ -113,8 +113,7 @@ Pause / Resume Timer · Reset Timer · End Turn · Reset Team’s Guess (a locke
 
 ### Keyboard
 - Everything is reachable with Tab, Enter and Space.
-- On the map: arrow keys pan, `+` / `−` zoom, then press **Drop pin at map centre**.
-- Or type a country into the list box and press **Place pin**.
+- Answers are placed only by clicking or tapping on the map (drag the pin to move it); typing a country is not available. On the map, arrow keys pan and `+` / `−` zoom.
 - Shortcuts when not typing: `L` lock in, `P` pause/resume, `M` mute. Optional soundboard shortcuts use `Shift`+number.
 
 ---
@@ -219,7 +218,7 @@ Tested in a Chromium browser:
 - **Flow:** intro → setup → rules → teams → start → game → reveal → end.
 - **Setup:** duration presets and auto-rounds (2/4/6/8/9/11); custom-duration validation; manual round override.
 - **Teams:** random names and rerolls; a very long team name (truncated in the scorebar, wrapped elsewhere).
-- **Turns:** Team 1’s pin is hidden from Team 2; confidence is required before locking in; pins can be placed from the map or the country list; Pause/Resume works; a timeout auto-locks a placed pin.
+- **Turns:** Team 1’s pin is hidden from Team 2; confidence is required before locking in; pins are placed by clicking the map; Pause/Resume works; a timeout auto-locks a placed pin.
 - **Scoring:** correct (3) vs. other team (1); a lone guess (2/0); neither team submitting (0/0, with a replay option).
 - **Facilitator tools:** Reset Current Round removes awarded points; Skip Question; Reveal Answer with pending turns; End Game Early with the tie prompt.
 - **Sudden Death:** two exact ties lead to the correct-count, then average-proximity tie-breaks, and to joint winners when everything is level.
